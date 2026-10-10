@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import os
 from pathlib import Path
 from typing import Any, Dict, List
@@ -7,12 +8,26 @@ from fastapi.templating import Jinja2Templates
 
 from app.models import FaultDefinition, GauntletRun, RunRequest
 from app.orchestrator import Orchestrator
+from app.tracing import get_tracing_status, init_tracing, shutdown_tracing
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize Neatlogs tracing once on application startup
+    init_tracing()
+    try:
+        yield
+    finally:
+        # Shut down Neatlogs tracing once during application shutdown
+        shutdown_tracing()
+
 
 # Initialize FastAPI app
 app = FastAPI(
     title="GAUNTLET",
     description="Adversarial Chaos & Hardening Platform for Autonomous AI Agents",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -25,8 +40,9 @@ async def dashboard(request: Request):
     catalog = orchestrator.get_catalog_faults()
     runs = orchestrator.list_runs()
     return templates.TemplateResponse(
-        "index.html",
-        {
+        request=request,
+        name="index.html",
+        context={
             "request": request,
             "catalog": catalog,
             "recent_runs": runs,
@@ -41,7 +57,8 @@ async def health_check():
         "status": "healthy",
         "service": "gauntlet-core",
         "version": "0.1.0",
-        "orchestrator_ready": True
+        "orchestrator_ready": True,
+        "tracing": get_tracing_status(),
     }
 
 
@@ -76,12 +93,29 @@ async def get_run_details(run_id: str):
 @app.get("/api/runs/{run_id}/evidence")
 async def get_run_evidence(run_id: str):
     """Download cryptographically sealed tamper-evident execution trace."""
-    evidence_path = os.path.join(orchestrator.evidence_dir, f"evidence_{run_id}.json")
-    if not os.path.exists(evidence_path):
+    evidence = orchestrator.get_evidence(run_id)
+    if not evidence:
         raise HTTPException(status_code=404, detail="Evidence packet not found")
-    import json
-    with open(evidence_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return evidence
+
+
+@app.get("/api/runs/{run_id}/evidence/verify")
+async def verify_run_evidence(run_id: str):
+    """Verify cryptographic SHA-256 integrity seal of an evidence packet."""
+    evidence = orchestrator.get_evidence(run_id)
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence packet not found")
+    from app.audit import compute_audit_seal, verify_audit_seal
+    is_valid = verify_audit_seal(evidence)
+    stored_seal = evidence.get("sha256_audit_seal")
+    computed_seal = compute_audit_seal(evidence)
+    return {
+        "run_id": run_id,
+        "valid": is_valid,
+        "stored_seal": stored_seal,
+        "computed_seal": computed_seal,
+        "guarantee": "Content integrity and tamper-evidence via canonical SHA-256. Does not provide origin authenticity or digital signature without PKI."
+    }
 
 
 if __name__ == "__main__":

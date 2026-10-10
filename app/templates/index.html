@@ -611,7 +611,7 @@
                         <td>
                             <span class="tag-sev" style="background: rgba(255,255,255,0.1);">{{ r.verdict.verdict }}</span>
                         </td>
-                        <td class="mono font-bold">{{ r.score.overall_resilience_score }}%</td>
+                        <td class="mono font-bold">{% if r.score and r.score.overall_resilience_score is not none %}{{ r.score.overall_resilience_score }}%{% else %}Unavailable{% endif %}</td>
                         <td>{{ r.score.total_faults_applied }}</td>
                         <td class="mono" style="color: var(--text-dim);">{{ r.timestamp.strftime('%H:%M:%S') }}</td>
                     </tr>
@@ -734,25 +734,25 @@
                         <div style="font-size: 0.85rem; opacity: 0.9;">${run.verdict.summary}</div>
                     </div>
                     <div class="mono" style="font-size: 1.25rem; font-weight: 800;">
-                        ${run.score.overall_resilience_score}%
+                        ${run.score && run.score.overall_resilience_score !== null && run.score.overall_resilience_score !== undefined ? `${run.score.overall_resilience_score}%` : 'Unavailable'}
                     </div>
                 </div>
 
                 <div class="score-pill-grid">
                     <div class="score-pill">
-                        <div class="num" style="color: var(--accent-cyan);">${run.score.fault_tolerance_score}%</div>
+                        <div class="num" style="color: var(--accent-cyan);">${run.score && run.score.fault_tolerance_score !== null && run.score.fault_tolerance_score !== undefined ? `${run.score.fault_tolerance_score}%` : 'N/A'}</div>
                         <div class="txt">Fault Tolerance</div>
                     </div>
                     <div class="score-pill">
-                        <div class="num" style="color: var(--accent-emerald);">${run.score.safety_preservation_score}%</div>
+                        <div class="num" style="color: var(--accent-emerald);">${run.score ? `${run.score.safety_preservation_score}%` : 'N/A'}</div>
                         <div class="txt">Safety Boundary</div>
                     </div>
                     <div class="score-pill">
-                        <div class="num" style="color: var(--accent-purple);">${run.score.recovery_efficiency_score}%</div>
+                        <div class="num" style="color: var(--accent-purple);">${run.score && run.score.recovery_efficiency_score !== null && run.score.recovery_efficiency_score !== undefined ? `${run.score.recovery_efficiency_score}%` : 'N/A'}</div>
                         <div class="txt">Recovery Speed</div>
                     </div>
                     <div class="score-pill">
-                        <div class="num" style="color: var(--accent-amber);">${run.score.faults_mitigated}/${run.score.total_faults_applied}</div>
+                        <div class="num" style="color: var(--accent-amber);">${run.score ? `${run.score.faults_mitigated}/${run.score.total_faults_applied}` : '0/0'}</div>
                         <div class="txt">Chaos Mitigated</div>
                     </div>
                 </div>
@@ -771,21 +771,29 @@
 
                 if (runs.length === 0) return;
 
-                const mean = (runs.reduce((acc, r) => acc + (r.score ? r.score.overall_resilience_score : 0), 0) / runs.length).toFixed(1);
-                document.getElementById('kpi-mean-resilience').innerText = `${mean}%`;
+                const scoredRuns = runs.filter(r => r.score && r.score.overall_resilience_score !== null && r.score.overall_resilience_score !== undefined);
+                const mean = scoredRuns.length > 0
+                    ? (scoredRuns.reduce((acc, r) => acc + r.score.overall_resilience_score, 0) / scoredRuns.length).toFixed(1) + '%'
+                    : 'N/A';
+                document.getElementById('kpi-mean-resilience').innerText = mean;
 
-                tbody.innerHTML = runs.map(r => `
+                tbody.innerHTML = runs.map(r => {
+                    const resScore = r.score && r.score.overall_resilience_score !== null && r.score.overall_resilience_score !== undefined
+                        ? `${r.score.overall_resilience_score}%`
+                        : 'Unavailable';
+                    return `
                     <tr>
                         <td class="mono">${r.run_id}</td>
                         <td>${r.subject.name}</td>
                         <td>
                             <span class="tag-sev" style="background: rgba(255,255,255,0.1);">${r.verdict.verdict}</span>
                         </td>
-                        <td class="mono font-bold">${r.score.overall_resilience_score}%</td>
-                        <td>${r.score.total_faults_applied}</td>
+                        <td class="mono font-bold">${resScore}</td>
+                        <td>${r.score ? r.score.total_faults_applied : 0}</td>
                         <td class="mono" style="color: var(--text-dim);">${new Date(r.timestamp).toLocaleTimeString()}</td>
                     </tr>
-                `).join('');
+                `;
+                }).join('');
             } catch (e) {
                 console.error("Failed to refresh runs table", e);
             }

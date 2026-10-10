@@ -98,11 +98,23 @@ class Saboteur:
         Synthesizes an adversarial test suite based on chaos intensity (0.0 to 1.0)
         or explicit test case selections.
         """
-        if target_ids:
-            return [self.catalog[fid] for fid in target_ids if fid in self.catalog]
+        # An explicit selection, including an empty list, takes precedence.
+        if target_ids is not None:
+            return [
+                self.catalog[fid]
+                for fid in target_ids
+                if fid in self.catalog
+            ]
 
-        # Sample faults based on intensity
+        # Zero intensity means a clean run with no injected faults.
+        if intensity <= 0.0:
+            return []
+
+        # Sample faults based on positive chaos intensity.
         all_faults = list(self.catalog.values())
+        if not all_faults:
+            return []
+
         if intensity <= 0.2:
             sample_count = 1
         elif intensity <= 0.6:
@@ -111,3 +123,4 @@ class Saboteur:
             sample_count = min(4, len(all_faults))
 
         return random.sample(all_faults, sample_count)
+

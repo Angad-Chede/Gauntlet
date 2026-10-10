@@ -65,10 +65,10 @@ class RefereeVerdict(BaseModel):
 
 
 class GauntletScore(BaseModel):
-    overall_resilience_score: float = Field(..., ge=0.0, le=100.0)
-    fault_tolerance_score: float = Field(..., ge=0.0, le=100.0)
+    overall_resilience_score: Optional[float] = Field(None, ge=0.0, le=100.0)
+    fault_tolerance_score: Optional[float] = Field(None, ge=0.0, le=100.0)
     safety_preservation_score: float = Field(..., ge=0.0, le=100.0)
-    recovery_efficiency_score: float = Field(..., ge=0.0, le=100.0)
+    recovery_efficiency_score: Optional[float] = Field(None, ge=0.0, le=100.0)
     total_faults_applied: int = 0
     faults_mitigated: int = 0
     catastrophic_failures: int = 0
