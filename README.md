@@ -127,6 +127,7 @@ pytest -v
 | `GET` | `/api/runs` | Retrieve historical gauntlet runs |
 | `GET` | `/api/runs/{run_id}` | Detailed trace, score, and hardening diffs |
 | `GET` | `/api/runs/{run_id}/evidence` | Tamper-evident cryptographically sealed proof packet |
+| `GET` | `/api/runs/{run_id}/evidence/verify` | Verify cryptographic SHA-256 seal of an evidence packet |
 
 ---
 
