@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAUNTLET — AI Agent Adversarial Resilience & Hardening Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #090D16;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-card-hover: rgba(24, 33, 53, 0.9);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(139, 92, 246, 0.3);
+            --accent-purple: #8B5CF6;
+            --accent-purple-glow: rgba(139, 92, 246, 0.5);
+            --accent-cyan: #06B6D4;
+            --accent-emerald: #10B981;
+            --accent-amber: #F59E0B;
+            --accent-rose: #F43F5E;
+            --text-main: #F3F4F6;
+            --text-muted: #9CA3AF;
+            --text-dim: #6B7280;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            line-height: 1.5;
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #7C3AED, #3B82F6);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px var(--accent-purple-glow);
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        .brand-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #FFFFFF, #C4B5FD);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-emerald);
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-emerald);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+        }
+
+        .kpi-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-val {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #FFFFFF;
+        }
+
+        /* Main Workspace Grid */
+        .workspace {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Form Card */
+        .panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .panel-header {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            color: #FFF;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 12px var(--accent-purple-glow);
+        }
+
+        .slider-wrap {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent-purple);
+        }
+
+        .slider-val {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            min-width: 40px;
+        }
+
+        /* Fault Catalog Checklist */
+        .fault-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .fault-item {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.65rem 0.85rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .fault-item:hover {
+            border-color: var(--border-glow);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .fault-meta h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #FFF;
+        }
+
+        .fault-meta p {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            line-height: 1.2;
+            margin-top: 2px;
+        }
+
+        .tag-sev {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .sev-CRITICAL { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); border: 1px solid var(--accent-rose); }
+        .sev-HIGH { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
+        .sev-MEDIUM { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
+
+        .btn-launch {
+            width: 100%;
+            background: linear-gradient(135deg, #7C3AED, #4F46E5);
+            border: none;
+            border-radius: 12px;
+            color: #FFF;
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 20px var(--accent-purple-glow);
+            transition: all 0.2s ease;
+        }
+
+        .btn-launch:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(124, 58, 237, 0.7);
+        }
+
+        .btn-launch:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Results Display */
+        .verdict-banner {
+            border-radius: 14px;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            border: 1px solid transparent;
+        }
+
+        .verdict-PASSED {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: var(--accent-emerald);
+        }
+
+        .verdict-RESILIENT_DEGRADED {
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.35);
+            color: var(--accent-amber);
+        }
+
+        .verdict-FAILED, .verdict-CRITICAL_VIOLATION {
+            background: rgba(244, 63, 94, 0.12);
+            border-color: rgba(244, 63, 94, 0.35);
+            color: var(--accent-rose);
+        }
+
+        .verdict-headline {
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .score-pill-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .score-pill {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .score-pill .num {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #FFF;
+        }
+
+        .score-pill .txt {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Steps Timeline */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-step {
+            display: grid;
+            grid-template-columns: 80px 180px 1fr 90px;
+            gap: 1rem;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+
+        .timeline-actor {
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .actor-SUBJECT { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+        .actor-REFEREE { background: rgba(139, 92, 246, 0.2); color: #A78BFA; }
+        .actor-SYSTEM { background: rgba(107, 114, 128, 0.2); color: #9CA3AF; }
+
+        /* Hardening Section */
+        .diff-box {
+            background: #040711;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            color: #A5B4FC;
+            white-space: pre-wrap;
+            margin-top: 0.5rem;
+        }
+
+        .rec-item {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .rec-item h4 {
+            color: #FFF;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .rec-diag {
+            font-size: 0.8rem;
+            color: var(--accent-rose);
+            margin-bottom: 0.5rem;
+        }
+
+        .rec-sol {
+            font-size: 0.8rem;
+            color: var(--accent-emerald);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Past Runs Table */
+        .runs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .runs-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        .runs-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .runs-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo-wrap">
+                <div class="brand-icon">⚔️</div>
+                <div>
+                    <h1 class="brand-title">GAUNTLET</h1>
+                    <div class="brand-subtitle">AI Agent Adversarial Chaos & Hardening Engine</div>
+                </div>
+            </div>
+            <div class="badge-status">
+                <span class="pulse-dot"></span>
+                <span>HARNESS ONLINE & ARMED</span>
+            </div>
+        </header>
+
+        <!-- KPI Metrics -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Chaos Gauntlets</div>
+                <div class="kpi-val" id="kpi-total-runs">{{ total_runs }}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Mean Resilience Index</div>
+                <div class="kpi-val" style="color: var(--accent-cyan);" id="kpi-mean-resilience">88.4%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Active Chaos Vectors</div>
+                <div class="kpi-val" style="color: var(--accent-purple);">{{ catalog|length }}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Zero-Day Breaches Stopped</div>
+                <div class="kpi-val" style="color: var(--accent-emerald);">100%</div>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="workspace">
+            <!-- Left Config Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span>⚡ Stress Test Config</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>Target Agent Name</label>
+                    <input type="text" id="subject-name" value="Enterprise Autonomous Ops v1" />
+                </div>
+
+                <div class="form-group">
+                    <label>Chaos Intensity (<span id="intensity-val" class="mono">0.6</span>)</label>
+                    <div class="slider-wrap">
+                        <input type="range" id="intensity" min="0.1" max="1.0" step="0.1" value="0.6" oninput="document.getElementById('intensity-val').innerText = this.value" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Adversarial Fault Catalog (Select to Force)</label>
+                    <div class="fault-list">
+                        {% for fault in catalog %}
+                        <label class="fault-item">
+                            <input type="checkbox" name="fault_choice" value="{{ fault.id }}" />
+                            <div class="fault-meta">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                                    <h4>{{ fault.name }}</h4>
+                                    <span class="tag-sev sev-{{ fault.severity }}">{{ fault.severity }}</span>
+                                </div>
+                                <p>{{ fault.description }}</p>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+                    <input type="checkbox" id="auto-harden" checked />
+                    <label for="auto-harden" style="margin-bottom: 0; cursor: pointer;">Synthesize Auto-Remediation Patches</label>
+                </div>
+
+                <button class="btn-launch" id="btn-run" onclick="launchGauntlet()">
+                    <span>🔥 LAUNCH GAUNTLET</span>
+                </button>
+            </div>
+
+            <!-- Right Results Panel -->
+            <div class="panel" id="results-panel">
+                <div class="panel-header">
+                    <span>📊 Evaluation Console</span>
+                    <span id="run-tag" class="mono" style="font-size: 0.8rem; color: var(--text-muted);">READY FOR INJECTION</span>
+                </div>
+
+                <div id="live-results">
+                    <!-- Placeholder initial state -->
+                    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-dim);">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🛡️</div>
+                        <h3 style="color: var(--text-muted); margin-bottom: 0.5rem;">Awaiting Gauntlet Execution</h3>
+                        <p style="font-size: 0.85rem; max-width: 400px; margin: 0 auto;">
+                            Select attack vectors or adjust chaos intensity on the left, then launch the adversarial pipeline to stress-test agent boundaries.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="panel" style="margin-top: 2rem;">
+            <div class="panel-header">
+                <span>📜 Recent Gauntlet Audit Logs</span>
+            </div>
+            <table class="runs-table">
+                <thead>
+                    <tr>
+                        <th>Run ID</th>
+                        <th>Target Agent</th>
+                        <th>Verdict</th>
+                        <th>Resilience Score</th>
+                        <th>Faults Injected</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="runs-tbody">
+                    {% for r in recent_runs %}
+                    <tr>
+                        <td class="mono">{{ r.run_id }}</td>
+                        <td>{{ r.subject.name }}</td>
+                        <td>
+                            <span class="tag-sev" style="background: rgba(255,255,255,0.1);">{{ r.verdict.verdict }}</span>
+                        </td>
+                        <td class="mono font-bold">{{ r.score.overall_resilience_score }}%</td>
+                        <td>{{ r.score.total_faults_applied }}</td>
+                        <td class="mono" style="color: var(--text-dim);">{{ r.timestamp.strftime('%H:%M:%S') }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-dim); padding: 2rem;">
+                            No runs recorded yet. Launch your first Gauntlet above!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script>
+        async function launchGauntlet() {
+            const btn = document.getElementById('btn-run');
+            const panel = document.getElementById('live-results');
+            const runTag = document.getElementById('run-tag');
+
+            const subjectName = document.getElementById('subject-name').value;
+            const intensity = parseFloat(document.getElementById('intensity').value);
+            const autoHarden = document.getElementById('auto-harden').checked;
+
+            const selectedFaults = Array.from(document.querySelectorAll('input[name="fault_choice"]:checked'))
+                .map(cb => cb.value);
+
+            btn.disabled = true;
+            btn.innerHTML = '<span>⚡ EXECUTING CHAOS INJECTIONS...</span>';
+            runTag.innerText = 'GAUNTLET IN PROGRESS';
+
+            panel.innerHTML = `
+                <div style="text-align: center; padding: 3rem 1rem;">
+                    <div style="font-size: 2.5rem; animation: pulse 1s infinite;">⚔️</div>
+                    <h3 style="margin-top: 1rem; color: #FFF;">Interception in progress...</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">Saboteur executing chaos. Referee evaluating agent safety boundaries.</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subject_name: subjectName,
+                        chaos_intensity: intensity,
+                        fault_ids: selectedFaults.length > 0 ? selectedFaults : null,
+                        enable_auto_harden: autoHarden
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                renderRunResults(data);
+                refreshRunsTable();
+            } catch (err) {
+                panel.innerHTML = `<div style="color: var(--accent-rose); padding: 2rem;">Error executing Gauntlet: ${err.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🔥 LAUNCH GAUNTLET</span>';
+            }
+        }
+
+        function renderRunResults(run) {
+            const panel = document.getElementById('live-results');
+            const runTag = document.getElementById('run-tag');
+            runTag.innerText = `RUN: ${run.run_id}`;
+
+            const verdictClass = `verdict-${run.verdict.verdict}`;
+            
+            let recsHtml = '';
+            if (run.hardening_recommendations && run.hardening_recommendations.length > 0) {
+                recsHtml = `
+                    <div style="margin-top: 1.5rem;">
+                        <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">🛡️ Automated Hardening Recommendations</h3>
+                        ${run.hardening_recommendations.map(r => `
+                            <div class="rec-item">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h4>${r.title}</h4>
+                                    <span class="tag-sev sev-${r.severity}">${r.severity}</span>
+                                </div>
+                                <div class="rec-diag"><strong>Diagnosis:</strong> ${r.diagnosis}</div>
+                                <div class="rec-sol"><strong>Remediation:</strong> ${r.remediation}</div>
+                                ${r.patch_diff ? `<div class="diff-box">${r.patch_diff}</div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            let timelineHtml = `
+                <div style="margin-top: 1.5rem;">
+                    <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">🛰️ Interception & Execution Trace</h3>
+                    <div class="timeline">
+                        ${run.steps.map(s => `
+                            <div class="timeline-step">
+                                <span class="timeline-actor actor-${s.actor}">${s.actor}</span>
+                                <span class="mono" style="font-weight:600; color: #FFF;">${s.action}</span>
+                                <span style="color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    ${JSON.stringify(s.payload)}
+                                </span>
+                                <span class="mono" style="text-align: right; color: ${s.status === 'OK' || s.status === 'SUCCESS' ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; font-weight:700;">
+                                    ${s.status}
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            panel.innerHTML = `
+                <div class="verdict-banner ${verdictClass}">
+                    <div>
+                        <div class="verdict-headline">${run.verdict.verdict}</div>
+                        <div style="font-size: 0.85rem; opacity: 0.9;">${run.verdict.summary}</div>
+                    </div>
+                    <div class="mono" style="font-size: 1.25rem; font-weight: 800;">
+                        ${run.score.overall_resilience_score}%
+                    </div>
+                </div>
+
+                <div class="score-pill-grid">
+                    <div class="score-pill">
+                        <div class="num" style="color: var(--accent-cyan);">${run.score.fault_tolerance_score}%</div>
+                        <div class="txt">Fault Tolerance</div>
+                    </div>
+                    <div class="score-pill">
+                        <div class="num" style="color: var(--accent-emerald);">${run.score.safety_preservation_score}%</div>
+                        <div class="txt">Safety Boundary</div>
+                    </div>
+                    <div class="score-pill">
+                        <div class="num" style="color: var(--accent-purple);">${run.score.recovery_efficiency_score}%</div>
+                        <div class="txt">Recovery Speed</div>
+                    </div>
+                    <div class="score-pill">
+                        <div class="num" style="color: var(--accent-amber);">${run.score.faults_mitigated}/${run.score.total_faults_applied}</div>
+                        <div class="txt">Chaos Mitigated</div>
+                    </div>
+                </div>
+
+                ${timelineHtml}
+                ${recsHtml}
+            `;
+        }
+
+        async function refreshRunsTable() {
+            try {
+                const res = await fetch('/api/runs');
+                const runs = await res.json();
+                const tbody = document.getElementById('runs-tbody');
+                document.getElementById('kpi-total-runs').innerText = runs.length;
+
+                if (runs.length === 0) return;
+
+                const mean = (runs.reduce((acc, r) => acc + (r.score ? r.score.overall_resilience_score : 0), 0) / runs.length).toFixed(1);
+                document.getElementById('kpi-mean-resilience').innerText = `${mean}%`;
+
+                tbody.innerHTML = runs.map(r => `
+                    <tr>
+                        <td class="mono">${r.run_id}</td>
+                        <td>${r.subject.name}</td>
+                        <td>
+                            <span class="tag-sev" style="background: rgba(255,255,255,0.1);">${r.verdict.verdict}</span>
+                        </td>
+                        <td class="mono font-bold">${r.score.overall_resilience_score}%</td>
+                        <td>${r.score.total_faults_applied}</td>
+                        <td class="mono" style="color: var(--text-dim);">${new Date(r.timestamp).toLocaleTimeString()}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error("Failed to refresh runs table", e);
+            }
+        }
+    </script>
+</body>
+</html>
