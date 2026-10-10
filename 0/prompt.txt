@@ -1,0 +1,36 @@
+We are working in `C:\Users\USER\OneDrive\Desktop\gauntlet`.
+
+Entire CLI 0.11.4 is enabled, authenticated, and discoverable in the current PowerShell session. The active Antigravity session is `e05dab67-2841-4db1-ac45-d9532f291a25`. Git uses `.git/hooks`, and `entire checkpoint list` currently reports zero checkpoints.
+
+The last application commit is `fb5b7a51d18b5a9a179a583ab7f3cdbe9416dae4`. Its tests passed (41 passed), but its Entire checkpoint was not captured.
+
+For now, do **inspection and proposal only**:
+1. Inspect the repository documentation and identify one small, useful documentation improvement directly related to the verified current implementation.
+2. Do not edit files, stage, commit, amend, reset, or push.
+3. Do not create an artificial change just to generate a checkpoint.
+4. Return the exact proposed documentation diff and explain why it is useful.
+5. Also explain how to ensure the next genuine Antigravity commit is captured by Entire, given that the current session's transcript path is valid and the previous session's path was missing.
+
+Stop and wait for approval.
+
+---
+
+Proceed with the approved GAUNTLET README documentation improvement.
+
+Repository: `C:\Users\USER\OneDrive\Desktop\gauntlet`
+
+### Change
+In README.md's API routes table, add exactly this row next to the existing evidence endpoint:
+
+| `GET` | `/api/runs/{run_id}/evidence/verify` | Verify cryptographic SHA-256 seal of an evidence packet |
+
+Do not change application code or unrelated documentation.
+
+### Verify
+1. Inspect the README diff and ensure only this row was added.
+2. Run `git diff --check`.
+3. Confirm `entire` resolves in the current PowerShell environment and the active session is `e05dab67-2841-4db1-ac45-d9532f291a25`.
+4. Do not stage, commit, amend, or push anything yet.
+5. Report the exact diff and the results of the checks.
+
+Stop and wait for approval before staging or committing.
