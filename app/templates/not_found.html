@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Not found — GAUNTLET{% endblock %}
+{% block heading %}Run not found{% endblock %}
+{% block content %}
+<div class="empty panel panel-pad">
+  <h3>No record for this identifier</h3>
+  <p>The run ID was not in memory or on disk. Confirm the identifier, or start a new experiment.</p>
+  <a class="btn btn-primary" href="/new">New test run</a>
+</div>
+{% endblock %}

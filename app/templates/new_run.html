@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}New test run — GAUNTLET{% endblock %}
+{% block heading %}New test run{% endblock %}
+{% block actions %}
+<button class="btn btn-primary" type="submit" form="run-form" id="btn-run">Run adversarial test</button>
+{% endblock %}
+{% block content %}
+<p class="lede">Configure a controlled experiment. Selected fault IDs are sent to the engine unchanged. If you choose sampling, the Saboteur picks from the catalog using chaos intensity. A clean run injects nothing and cannot prove resilience.</p>
+
+<div class="page-grid grid-2">
+  <form id="run-form" class="panel panel-pad form-grid" novalidate>
+    <label class="field">
+      <span>Subject name</span>
+      <input type="text" id="subject-name" name="subject_name" value="Autonomous Assistant v1" maxlength="120" autocomplete="off">
+    </label>
+
+    <fieldset class="field" style="border:0;padding:0;margin:0">
+      <legend class="field-label">Experiment mode</legend>
+      <div class="mode-pills">
+        <label class="is-on"><input type="radio" name="mode" value="selected" checked> Selected faults only</label>
+        <label><input type="radio" name="mode" value="sample"> Intensity sampling</label>
+        <label><input type="radio" name="mode" value="clean"> Clean run (no faults)</label>
+      </div>
+    </fieldset>
+
+    <label class="field">
+      <span>Chaos intensity <span class="mono" id="intensity-val">0.5</span></span>
+      <input type="range" id="intensity" min="0" max="1" step="0.1" value="0.5">
+      <span class="help">Used when sampling. Ignored for explicit selections. Zero intensity with no IDs yields a clean run.</span>
+    </label>
+
+    <label class="field">
+      <span>Deterministic seed <span class="muted">(optional replay seed)</span></span>
+      <input type="number" id="run-seed" name="seed" placeholder="e.g. 42109" min="0" step="1" autocomplete="off">
+      <span class="help">Leave blank for unseeded dynamic randomness. Supplying an integer ensures deterministic fault selection across replays.</span>
+    </label>
+
+    <div>
+      <div class="field-label" style="margin-bottom:8px">Fault families</div>
+      <div class="fault-list">
+        {% for fault in catalog %}
+        <label class="fault-card">
+          <input type="checkbox" name="fault_choice" value="{{ fault.id }}" data-name="{{ fault.name }}" data-description="{{ fault.description }}">
+          <div>
+            <h4>{{ fault.name }}</h4>
+            <p>{{ fault.description }}</p>
+            <p class="mono muted">{{ fault.id }} · {{ fault.fault_type.value }} · {{ fault.target_endpoint }}</p>
+          </div>
+          <span class="badge badge-neutral">{{ fault.severity }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <label class="field" style="grid-template-columns:18px 1fr;align-items:start">
+      <input type="checkbox" id="auto-harden" checked>
+      <span>Generate advisory hardening recommendations. Patches are suggestions only and are never applied automatically.</span>
+    </label>
+
+    <p class="notice notice-crit" id="form-error" hidden></p>
+  </form>
+
+  <aside class="panel panel-pad">
+    <div class="panel-h"><h2>Planned experiment</h2></div>
+    <div class="summary-list" id="plan-summary"></div>
+    <p class="help" style="margin-top:16px">Mandatory families in this catalog: HTTP 429 (<span class="mono">FAULT-RATE-LIMIT-429</span>), HTTP 500 (<span class="mono">FAULT-HTTP-500</span>), latency (<span class="mono">FAULT-LATENCY-99</span>), malformed JSON (<span class="mono">FAULT-MALFORMED-PAYLOAD</span>), schema drift (<span class="mono">FAULT-SCHEMA-DRIFT</span>), indirect prompt injection (<span class="mono">FAULT-INDIRECT-INJECTION</span>).</p>
+  </aside>
+</div>
+
+<div class="overlay" id="progress-overlay" aria-hidden="true">
+  <div class="dialog" role="status" aria-live="polite">
+    <div class="progress-note">
+      <span class="spinner" aria-hidden="true"></span>
+      <div>
+        <h2>Running adversarial test…</h2>
+        <p class="muted">Waiting on the synchronous backend. This is not a simulated progress meter.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<dialog class="dialog" id="confirm-dialog">
+  <h2>Review configuration</h2>
+  <div id="confirm-body"></div>
+  <div class="topbar-actions" style="margin-top:16px;justify-content:flex-end">
+    <button class="btn btn-secondary" type="button" onclick="document.getElementById('confirm-dialog').close()">Cancel</button>
+    <button class="btn btn-primary" type="button" id="confirm-go">Start run</button>
+  </div>
+</dialog>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="/static/js/new-run.js"></script>
+{% endblock %}

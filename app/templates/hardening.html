@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Hardening {{ run_id }} — GAUNTLET{% endblock %}
+{% block heading %}Hardening recommendations{% endblock %}
+{% block actions %}
+<a class="btn btn-primary" href="/new">New test run</a>
+{% endblock %}
+{% block content %}
+<nav class="subnav" aria-label="Run sections">
+  <a href="/runs/{{ run_id }}">Inspector &amp; report</a>
+  <a href="/runs/{{ run_id }}/evidence">Evidence</a>
+  <a class="is-active" href="/runs/{{ run_id }}/hardening">Hardening</a>
+</nav>
+
+<p class="notice">These items are advisory. GAUNTLET does not apply generated code, execute patches, or modify the subject automatically.</p>
+
+<section class="panel panel-pad" style="margin-top:16px">
+  <div class="panel-h">
+    <div>
+      <h2>Advisory repair evaluation</h2>
+      <p class="muted" style="margin-top:4px">Replays the exact same fault configuration and deterministic seed against an adapted, hardened configuration in memory. Generated code diffs are never applied or written to disk.</p>
+    </div>
+    <button class="btn btn-primary" type="button" id="btn-eval-repair">Evaluate advisory repair</button>
+  </div>
+  <div id="repair-comparison-results" style="margin-top:16px">
+    <p class="help">Click <strong>Evaluate advisory repair</strong> to test whether the advisory mitigations restore resilience and safety under the same seed.</p>
+  </div>
+</section>
+
+<div class="page-grid" id="recs" style="margin-top:20px">
+  <div class="skeleton" style="height:80px"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="/static/js/hardening.js"></script>
+{% endblock %}

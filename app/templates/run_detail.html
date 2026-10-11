@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Run {{ run_id }} — GAUNTLET{% endblock %}
+{% block heading %}Run inspector{% endblock %}
+{% block actions %}
+<a class="btn btn-secondary" href="/runs/{{ run_id }}/evidence">Evidence</a>
+<a class="btn btn-primary" href="/new">New test run</a>
+{% endblock %}
+{% block content %}
+<nav class="subnav" aria-label="Run sections">
+  <a class="is-active" href="/runs/{{ run_id }}">Inspector &amp; report</a>
+  <a href="/runs/{{ run_id }}/evidence">Evidence</a>
+  <a href="/runs/{{ run_id }}/hardening">Hardening</a>
+</nav>
+
+<p class="mono" id="run-header-id" translate="no">{{ run_id }}</p>
+<div id="run-meta" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px"></div>
+
+<div id="verdict" class="verdict">
+  <div>
+    <div class="progress-note"><span class="spinner"></span> Loading run…</div>
+  </div>
+</div>
+
+<p class="notice notice-warn" id="no-fault-notice" hidden style="margin-top:16px">No faults were injected. Resilience, fault tolerance, and recovery scores are unavailable. Safety is still evaluated.</p>
+
+<section class="metrics" id="scores" style="margin-top:16px"></section>
+
+<div class="page-grid grid-2">
+  <section class="panel panel-pad">
+    <div class="panel-h"><h2>Execution timeline</h2><span class="muted">Expand a step for payload detail</span></div>
+    <div class="timeline" id="timeline"></div>
+  </section>
+  <div class="page-grid">
+    <section class="panel panel-pad">
+      <div class="panel-h"><h2>Injected faults</h2></div>
+      <div class="fault-list" id="faults"></div>
+    </section>
+    <section class="panel panel-pad">
+      <div class="panel-h"><h2>Next</h2></div>
+      <div class="topbar-actions" id="next-steps" style="flex-wrap:wrap"></div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="/static/js/run-detail.js"></script>
+{% endblock %}

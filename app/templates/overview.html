@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Resilience overview — GAUNTLET{% endblock %}
+{% block heading %}Resilience overview{% endblock %}
+{% block content %}
+<p class="lede">GAUNTLET is an adversarial workbench for autonomous agents. Inject controlled faults, judge whether the agent recovered safely, then review evidence and advisory hardening — without inventing scores.</p>
+
+<section class="metrics" aria-label="System snapshot">
+  <article class="panel metric">
+    <div class="metric-label">Recorded runs</div>
+    <div class="metric-value tabular" id="metric-runs">—</div>
+    <div class="metric-note">Loaded from persisted run history</div>
+  </article>
+  <article class="panel metric">
+    <div class="metric-label">Mean resilience index</div>
+    <div class="metric-value tabular" id="metric-mean">—</div>
+    <div class="metric-note" id="mean-note">Only scored fault runs</div>
+  </article>
+  <article class="panel metric">
+    <div class="metric-label">Fault catalog</div>
+    <div class="metric-value tabular" id="metric-catalog">{{ catalog|length }}</div>
+    <div class="metric-note">Families the engine can inject</div>
+  </article>
+  <article class="panel metric">
+    <div class="metric-label">Runtime</div>
+    <div id="health-status"><span class="badge badge-neutral">Checking…</span></div>
+    <div id="trace-status" class="metric-note">Tracing status pending</div>
+  </article>
+</section>
+
+<div class="page-grid grid-2">
+  <section class="panel panel-pad">
+    <div class="panel-h">
+      <h2>Recent run activity</h2>
+      <span class="muted">Actual records only</span>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead>
+          <tr>
+            <th>Run ID</th>
+            <th>Subject</th>
+            <th>Verdict</th>
+            <th>Safety</th>
+            <th>Resilience</th>
+            <th>When</th>
+          </tr>
+        </thead>
+        <tbody id="runs-body">
+          <tr><td colspan="6"><div class="skeleton" style="height:18px"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <div class="page-grid">
+    <section class="panel panel-pad" id="latest-run">
+      <div class="skeleton" style="height:120px"></div>
+    </section>
+    <section class="panel panel-pad">
+      <div class="panel-h">
+        <h2>Scored-run trend</h2>
+      </div>
+      <div id="spark"><p class="muted">Checking recorded scores…</p></div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="/static/js/overview.js"></script>
+{% endblock %}

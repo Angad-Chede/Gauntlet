@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Integrations — GAUNTLET{% endblock %}
+{% block heading %}Integrations &amp; settings{% endblock %}
+{% block actions %}{% endblock %}
+{% block content %}
+<p class="lede">Only capabilities the running process actually exposes. Secrets, environment files, and API keys are not shown.</p>
+
+<div class="page-grid grid-2">
+  <section class="panel panel-pad">
+    <div class="panel-h"><h2>Runtime health</h2></div>
+    <div id="settings-status"><div class="skeleton" style="height:80px"></div></div>
+  </section>
+  <section class="panel panel-pad">
+    <div class="panel-h"><h2>Evidence verification</h2></div>
+    <p>Each completed run writes a canonical JSON packet under <span class="mono">evidence/</span> with a SHA-256 seal. Open a run, then use <strong>Verify seal</strong> to compare stored and recomputed digests.</p>
+    <p class="help">The seal proves content integrity, not origin authenticity or a PKI signature.</p>
+  </section>
+  <section class="panel panel-pad">
+    <div class="panel-h"><h2>Neatlogs tracing</h2></div>
+    <p>When a server-side API key is present, runs emit workflow spans. Trace IDs appear on evidence packets only if the SDK returned a span context.</p>
+    <p class="help">Status: available or unavailable from <span class="mono">/api/health</span>. Linked dashboards outside this process are not claimed here.</p>
+  </section>
+  <section class="panel panel-pad">
+    <div class="panel-h"><h2>Not implemented in this build</h2></div>
+    <ul class="muted">
+      <li>SSO / authentication</li>
+      <li>Remote agent registration</li>
+      <li>Automatic patch application</li>
+      <li>WebSocket live telemetry</li>
+    </ul>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="/static/js/settings.js"></script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Evidence {{ run_id }} — GAUNTLET{% endblock %}
+{% block heading %}Evidence explorer{% endblock %}
+{% block actions %}
+<button class="btn btn-primary" type="button" id="verify-btn">Verify seal</button>
+{% endblock %}
+{% block content %}
+<nav class="subnav" aria-label="Run sections">
+  <a href="/runs/{{ run_id }}">Inspector &amp; report</a>
+  <a class="is-active" href="/runs/{{ run_id }}/evidence">Evidence</a>
+  <a href="/runs/{{ run_id }}/hardening">Hardening</a>
+</nav>
+
+<p class="lede">Integrity is proven only after a successful call to the verification API. A green Verified badge will not appear from packet presence alone.</p>
+
+<section class="panel panel-pad">
+  <div class="panel-h">
+    <h2>Verification status</h2>
+    <a class="btn btn-secondary" id="download-json" href="/api/runs/{{ run_id }}/evidence">Inspect packet JSON</a>
+  </div>
+  <div id="verify-status"><span class="badge badge-neutral">Not yet verified</span></div>
+  <div id="seals" style="margin-top:12px"></div>
+</section>
+
+<section class="panel panel-pad" style="margin-top:16px">
+  <div class="panel-h"><h2>Packet metadata</h2><span class="muted" id="event-count"></span></div>
+  <div id="packet-meta"><div class="skeleton" style="height:72px"></div></div>
+</section>
+
+<section class="panel panel-pad" style="margin-top:16px">
+  <div class="panel-h"><h2>Event records</h2></div>
+  <div class="timeline" id="events"></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="/static/js/evidence.js"></script>
+{% endblock %}
