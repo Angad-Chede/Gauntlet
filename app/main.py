@@ -1,12 +1,18 @@
 from contextlib import asynccontextmanager
-import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.models import FaultDefinition, GauntletRun, RunRequest
+from app.models import (
+    AdvisoryRepairComparison,
+    FaultDefinition,
+    GauntletRun,
+    RunRequest,
+    SubjectConfig,
+)
 from app.orchestrator import Orchestrator
 from app.tracing import get_tracing_status, init_tracing, shutdown_tracing
 
@@ -35,20 +41,84 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 orchestrator = Orchestrator()
 
 
-@app.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    catalog = orchestrator.get_catalog_faults()
-    runs = orchestrator.list_runs()
+def _page(request: Request, name: str, nav: str, status_code: int = 200, **extra):
     return templates.TemplateResponse(
         request=request,
-        name="index.html",
-        context={
-            "request": request,
-            "catalog": catalog,
-            "recent_runs": runs,
-            "total_runs": len(runs),
-        },
+        name=name,
+        status_code=status_code,
+        context={"request": request, "nav": nav, **extra},
     )
+
+
+@app.get("/landing", response_class=HTMLResponse)
+async def landing_page(request: Request):
+    baseline_run = orchestrator.get_run("run_d42996d50d")
+    evidence = orchestrator.get_evidence("run_d42996d50d") if baseline_run else None
+    return _page(
+        request,
+        "landing/index.html",
+        "landing",
+        catalog=orchestrator.get_catalog_faults(),
+        baseline_run=baseline_run,
+        evidence=evidence,
+        all_runs=orchestrator.list_runs(),
+        tracing_status=get_tracing_status(),
+    )
+
+
+@app.get("/app", response_class=HTMLResponse)
+async def dashboard_overview(request: Request):
+    return _page(request, "overview.html", "overview", catalog=orchestrator.get_catalog_faults())
+
+
+@app.get("/", response_class=HTMLResponse)
+async def root_landing_page(request: Request):
+    baseline_run = orchestrator.get_run("run_d42996d50d")
+    evidence = orchestrator.get_evidence("run_d42996d50d") if baseline_run else None
+    return _page(
+        request,
+        "landing/index.html",
+        "landing",
+        catalog=orchestrator.get_catalog_faults(),
+        baseline_run=baseline_run,
+        evidence=evidence,
+        all_runs=orchestrator.list_runs(),
+        tracing_status=get_tracing_status(),
+    )
+
+
+@app.get("/new", response_class=HTMLResponse)
+async def new_run(request: Request):
+    return _page(request, "new_run.html", "new", catalog=orchestrator.get_catalog_faults())
+
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings(request: Request):
+    return _page(request, "settings.html", "settings")
+
+
+@app.get("/runs/{run_id}", response_class=HTMLResponse)
+async def run_inspector(request: Request, run_id: str):
+    run = orchestrator.get_run(run_id)
+    if not run:
+        return _page(request, "not_found.html", "overview", status_code=404, run_id=run_id)
+    return _page(request, "run_detail.html", "run", run_id=run_id)
+
+
+@app.get("/runs/{run_id}/evidence", response_class=HTMLResponse)
+async def run_evidence_page(request: Request, run_id: str):
+    run = orchestrator.get_run(run_id)
+    if not run:
+        return _page(request, "not_found.html", "overview", status_code=404, run_id=run_id)
+    return _page(request, "evidence.html", "evidence", run_id=run_id)
+
+
+@app.get("/runs/{run_id}/hardening", response_class=HTMLResponse)
+async def run_hardening_page(request: Request, run_id: str):
+    run = orchestrator.get_run(run_id)
+    if not run:
+        return _page(request, "not_found.html", "overview", status_code=404, run_id=run_id)
+    return _page(request, "hardening.html", "hardening", run_id=run_id)
 
 
 @app.get("/api/health")
@@ -116,6 +186,24 @@ async def verify_run_evidence(run_id: str):
         "computed_seal": computed_seal,
         "guarantee": "Content integrity and tamper-evidence via canonical SHA-256. Does not provide origin authenticity or digital signature without PKI."
     }
+
+
+@app.post("/api/runs/{run_id}/repair-comparison", response_model=AdvisoryRepairComparison)
+async def get_repair_comparison(run_id: str, custom_config: Optional[SubjectConfig] = None):
+    """
+    Advisory before/after evaluation using identical fault configuration and seed.
+    Does not write or execute generated patches on disk.
+    """
+    run = orchestrator.get_run(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+    try:
+        return await orchestrator.evaluate_advisory_repair(run_id, hardened_config=custom_config)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
 if __name__ == "__main__":
