@@ -70,6 +70,9 @@ def verify_audit_seal(evidence_data: Dict[str, Any]) -> bool:
     - Stored seal contains non-hexadecimal characters.
     - Any covered field in the canonical payload was modified.
     """
+    if not isinstance(evidence_data, dict):
+        return False
+
     stored_seal = evidence_data.get("sha256_audit_seal")
     if not stored_seal or not isinstance(stored_seal, str):
         return False

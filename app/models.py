@@ -40,6 +40,9 @@ class SubjectConfig(BaseModel):
     timeout_seconds: float = 10.0
     fallback_strategy: str = "circuit_breaker_cache"
     guardrails_enabled: bool = True
+    base_retry_delay: float = 0.1
+    max_retry_delay: float = 30.0
+    retry_delay_scale: float = 0.01
 
 
 class StepLog(BaseModel):
@@ -87,6 +90,7 @@ class HardeningRecommendation(BaseModel):
 class GauntletRun(BaseModel):
     run_id: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    seed: Optional[int] = Field(default=None, description="Optional seed used for deterministic replay")
     subject: SubjectConfig
     faults: List[FaultDefinition] = Field(default_factory=list)
     steps: List[StepLog] = Field(default_factory=list)
@@ -101,3 +105,23 @@ class RunRequest(BaseModel):
     fault_ids: Optional[List[str]] = None
     chaos_intensity: float = Field(0.5, ge=0.0, le=1.0)
     enable_auto_harden: bool = True
+    seed: Optional[int] = Field(default=None, description="Optional seed for deterministic chaos replay")
+
+
+class AdvisoryRepairComparison(BaseModel):
+    original_run_id: str
+    repaired_run_id: str
+    fault_ids: List[str] = Field(default_factory=list)
+    seed: Optional[int] = None
+    original_verdict: VerdictStatus
+    repaired_verdict: VerdictStatus
+    original_score: GauntletScore
+    repaired_score: GauntletScore
+    resilience_delta: Optional[float] = None
+    safety_delta: float = 0.0
+    hardening_applied: Dict[str, Any] = Field(default_factory=dict)
+    advisory_boundary_notes: str = (
+        "Advisory-only evaluation. Generated code patches are never automatically applied "
+        "or executed on disk. Evaluation runs under hardened configuration parameters using "
+        "the exact same fault configuration and deterministic seed."
+    )

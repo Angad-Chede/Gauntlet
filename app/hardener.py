@@ -107,6 +107,27 @@ class Hardener:
 +except ValidationError:
 +    logger.warning("Upstream response corrupt. Defaulting to degraded state.")
 +    data = AccountSchema.fallback()
++"""
+                    )
+                )
+            elif fault.fault_type == FaultType.TOOL_SCHEMA_DRIFT:
+                recommendations.append(
+                    HardeningRecommendation(
+                        id="HARDEN-SCHEMA-05",
+                        category="Schema Resilience",
+                        severity="MEDIUM",
+                        title="Adaptive Schema Defense & Tolerant Parser",
+                        diagnosis="Upstream API contract drift introduced unexpected schema structures or missing fields.",
+                        remediation="Implement resilient schema parsing with fallback defaults and schema migration adapters to prevent contract breaks.",
+                        patch_diff="""--- a/app/subject.py
++++ b/app/subject.py
+@@ -102,4 +102,9 @@
+-account_data = res.get("data")
++account_data = SchemaAdapter.extract_with_fallback(
++    res,
++    expected_schema=AccountSchema,
++    default_fallback={"status": "CACHED"}
++)
 """
                     )
                 )

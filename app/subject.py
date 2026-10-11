@@ -1,8 +1,10 @@
 import asyncio
 import json
 import logging
+import math
+import re
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 from app.fault_proxy import FaultProxy
 from app.models import StepLog, SubjectConfig
 
@@ -15,12 +17,73 @@ class SubjectAgent:
     Equipped with realistic error-handling, retries, fallbacks, and security guardrails.
     """
 
-    def __init__(self, config: Optional[SubjectConfig] = None, proxy: Optional[FaultProxy] = None):
+    def __init__(
+        self,
+        config: Optional[SubjectConfig] = None,
+        proxy: Optional[FaultProxy] = None,
+        sleep_fn: Optional[Callable[[float], Awaitable[None]]] = None,
+    ):
         self.config = config or SubjectConfig()
         self.proxy = proxy or FaultProxy()
         self.execution_trace: List[StepLog] = []
         self._circuit_open = False
         self._consecutive_failures = 0
+        self._sleep_fn = sleep_fn or asyncio.sleep
+
+    @staticmethod
+    def parse_retry_after(error: Any) -> Optional[float]:
+        """
+        Parses numeric Retry-After value in seconds from an exception or message string.
+        Handles variations such as:
+          - 'Retry-After: 20s'
+          - 'Retry-After: 20'
+          - 'retry-after: 12.5'
+        Returns None for missing, non-numeric, negative, or invalid values.
+        """
+        if not error:
+            return None
+        msg = str(error)
+        match = re.search(r"(?i)\bretry-after\b\s*[:=]\s*([^\s,;]+)", msg)
+        if not match:
+            return None
+        raw_val = match.group(1).strip().strip("\"'").rstrip("sS")
+        try:
+            val = float(raw_val)
+            if math.isnan(val) or math.isinf(val) or val < 0:
+                return None
+            return val
+        except (ValueError, TypeError):
+            return None
+
+    def compute_retry_delay(self, attempt: int, error: Optional[Any] = None) -> Dict[str, Any]:
+        """
+        Computes a bounded, testable retry backoff delay policy.
+        If Retry-After is present and valid:
+          - Clamps delay to max_retry_delay.
+          - Scales by retry_delay_scale for fast simulation/testing.
+        Otherwise:
+          - Uses linear base_retry_delay * attempt clamped to max_retry_delay.
+        """
+        retry_after = self.parse_retry_after(error)
+        if retry_after is not None:
+            bounded_delay = min(max(0.0, retry_after), self.config.max_retry_delay)
+            sleep_seconds = bounded_delay * self.config.retry_delay_scale
+            return {
+                "retry_after_seconds": retry_after,
+                "bounded_delay_seconds": bounded_delay,
+                "sleep_seconds": sleep_seconds,
+                "is_retry_after": True,
+            }
+        else:
+            base = self.config.base_retry_delay * attempt
+            bounded_delay = min(max(0.0, base), self.config.max_retry_delay)
+            sleep_seconds = bounded_delay
+            return {
+                "retry_after_seconds": None,
+                "bounded_delay_seconds": bounded_delay,
+                "sleep_seconds": sleep_seconds,
+                "is_retry_after": False,
+            }
 
     def _log_step(self, action: str, actor: str = "SUBJECT", payload: Optional[Dict[str, Any]] = None,
                   latency_ms: float = 0.0, fault_injected: Optional[str] = None, status: str = "OK"):
@@ -106,9 +169,16 @@ class SubjectAgent:
                         status="DEGRADED",
                         fault_injected=res.get("fault_injected")
                     )
-                    # Fallback to cached default
-                    account_data = {"account_id": target_account, "balance": 10000.0, "status": "CACHED"}
-                    break
+                    if self.config.fallback_strategy:
+                        # Fallback to cached default
+                        account_data = {"account_id": target_account, "balance": 10000.0, "status": "CACHED"}
+                        break
+                    else:
+                        return {
+                            "success": False,
+                            "error": "Operation aborted: Incompatible schema drift without fallback strategy",
+                            "steps": [s.model_dump() for s in self.execution_trace]
+                        }
 
                 account_data = res.get("data")
                 fault_id = res.get("fault_injected")
@@ -123,10 +193,17 @@ class SubjectAgent:
 
             except Exception as exc:
                 self._consecutive_failures += 1
+                delay_info = self.compute_retry_delay(attempt, exc)
                 self._log_step(
                     action="RETRY_BACKOFF",
                     status="RECOVERING",
-                    payload={"error": str(exc), "attempt": attempt}
+                    payload={
+                        "error": str(exc),
+                        "attempt": attempt,
+                        "retry_after_seconds": delay_info["retry_after_seconds"],
+                        "delay_seconds": delay_info["bounded_delay_seconds"],
+                        "applied_sleep_seconds": delay_info["sleep_seconds"],
+                    }
                 )
                 if attempt == self.config.retry_limit:
                     if self.config.fallback_strategy:
@@ -142,7 +219,7 @@ class SubjectAgent:
                             "error": f"Operation aborted: Tool failure: {str(exc)}",
                             "steps": [s.model_dump() for s in self.execution_trace]
                         }
-                await asyncio.sleep(0.1 * attempt)
+                await self._sleep_fn(delay_info["sleep_seconds"])
 
         # Step 2: Compliance Verification & Prompt Guard
         self._log_step(
@@ -194,44 +271,60 @@ class SubjectAgent:
             }
 
         # Step 3: Settlement
-        self._log_step(
-            action="INVOKE_TOOL:settle_transfer",
-            payload={"source": target_account, "dest": "ACC-RECEIVER-441", "amount": amount}
-        )
-
-        try:
-            settle_res = await self.proxy.execute_intercepted(
-                "settle_transfer",
-                self._tool_settle_transfer,
-                target_account,
-                "ACC-RECEIVER-441",
-                amount
-            )
-            tx_data = settle_res.get("data")
-            total_duration_ms = (time.perf_counter() - t0) * 1000.0
-
+        for attempt in range(1, self.config.retry_limit + 1):
             self._log_step(
-                action="GOAL_ACCOMPLISHED",
-                status="COMPLETE",
-                latency_ms=total_duration_ms,
-                payload={"transaction": tx_data}
+                action=f"INVOKE_TOOL:settle_transfer (attempt {attempt})",
+                payload={"source": target_account, "dest": "ACC-RECEIVER-441", "amount": amount}
             )
 
-            return {
-                "success": True,
-                "transaction": tx_data,
-                "duration_ms": total_duration_ms,
-                "steps": [s.model_dump() for s in self.execution_trace]
-            }
+            try:
+                settle_res = await self.proxy.execute_intercepted(
+                    "settle_transfer",
+                    self._tool_settle_transfer,
+                    target_account,
+                    "ACC-RECEIVER-441",
+                    amount
+                )
+                tx_data = settle_res.get("data")
+                total_duration_ms = (time.perf_counter() - t0) * 1000.0
 
-        except Exception as exc:
-            self._log_step(
-                action="SETTLEMENT_FAILED",
-                status="ABORTED",
-                payload={"error": str(exc)}
-            )
-            return {
-                "success": False,
-                "error": f"Settlement aborted: {str(exc)}",
-                "steps": [s.model_dump() for s in self.execution_trace]
-            }
+                self._log_step(
+                    action="GOAL_ACCOMPLISHED",
+                    status="COMPLETE",
+                    latency_ms=total_duration_ms,
+                    payload={"transaction": tx_data}
+                )
+
+                return {
+                    "success": True,
+                    "transaction": tx_data,
+                    "duration_ms": total_duration_ms,
+                    "steps": [s.model_dump() for s in self.execution_trace]
+                }
+
+            except Exception as exc:
+                self._consecutive_failures += 1
+                delay_info = self.compute_retry_delay(attempt, exc)
+                self._log_step(
+                    action="RETRY_BACKOFF",
+                    status="RECOVERING",
+                    payload={
+                        "error": str(exc),
+                        "attempt": attempt,
+                        "retry_after_seconds": delay_info["retry_after_seconds"],
+                        "delay_seconds": delay_info["bounded_delay_seconds"],
+                        "applied_sleep_seconds": delay_info["sleep_seconds"],
+                    }
+                )
+                if attempt == self.config.retry_limit:
+                    self._log_step(
+                        action="SETTLEMENT_FAILED",
+                        status="ABORTED",
+                        payload={"error": str(exc)}
+                    )
+                    return {
+                        "success": False,
+                        "error": f"Settlement aborted: {str(exc)}",
+                        "steps": [s.model_dump() for s in self.execution_trace]
+                    }
+                await self._sleep_fn(delay_info["sleep_seconds"])

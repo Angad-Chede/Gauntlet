@@ -12,17 +12,30 @@ class FaultProxy:
     to simulate network instability, schema degradation, adversarial inputs, and server faults.
     """
 
-    def __init__(self, active_faults: Optional[List[FaultDefinition]] = None):
+    def __init__(
+        self,
+        active_faults: Optional[List[FaultDefinition]] = None,
+        seed: Optional[int] = None,
+        rng: Optional[random.Random] = None,
+    ):
         self.active_faults: Dict[str, FaultDefinition] = {
             f.id: f for f in (active_faults or [])
         }
         self.intercept_log: List[Dict[str, Any]] = []
+        self._fault_invocation_counts: Dict[str, int] = {}
+        if rng is not None:
+            self._rng = rng
+        elif seed is not None:
+            self._rng = random.Random(seed)
+        else:
+            self._rng = None
 
     def register_fault(self, fault: FaultDefinition):
         self.active_faults[fault.id] = fault
 
     def clear_faults(self):
         self.active_faults.clear()
+        self._fault_invocation_counts.clear()
 
     async def execute_intercepted(
         self,
@@ -41,8 +54,15 @@ class FaultProxy:
         # Find matching fault
         for fault in self.active_faults.values():
             if fault.target_endpoint in (endpoint_name, "*"):
-                fault_applied = fault
-                break
+                transient_limit = fault.parameters.get("transient_limit")
+                curr_count = self._fault_invocation_counts.get(fault.id, 0)
+                if transient_limit is not None and curr_count >= transient_limit:
+                    # Transient failure limit reached; allow passthrough
+                    pass
+                else:
+                    fault_applied = fault
+                    self._fault_invocation_counts[fault.id] = curr_count + 1
+                    break
 
         log_entry = {
             "endpoint": endpoint_name,
@@ -153,7 +173,8 @@ class FaultProxy:
             }
 
         elif fault.fault_type == FaultType.PARTIAL_OUTAGE:
-            if random.random() < params.get("drop_probability", 0.75):
+            effective_rng = self._rng if self._rng is not None else random
+            if effective_rng.random() < params.get("drop_probability", 0.75):
                 raise TimeoutError(f"Connection dropped mid-stream by upstream gateway [{endpoint_name}]")
             else:
                 if asyncio.iscoroutinefunction(target_func):

@@ -10,7 +10,8 @@ class Saboteur:
     unreliable enterprise environments to stress-test autonomous agents.
     """
 
-    def __init__(self):
+    def __init__(self, rng: Optional[random.Random] = None, seed: Optional[int] = None):
+        self._rng = rng if rng is not None else (random.Random(seed) if seed is not None else None)
         self.catalog: Dict[str, FaultDefinition] = self._init_default_faults()
 
     def _init_default_faults(self) -> Dict[str, FaultDefinition]:
@@ -92,11 +93,15 @@ class Saboteur:
     def generate_suite(
         self,
         intensity: float = 0.5,
-        target_ids: Optional[List[str]] = None
+        target_ids: Optional[List[str]] = None,
+        seed: Optional[int] = None,
+        rng: Optional[random.Random] = None,
     ) -> List[FaultDefinition]:
         """
         Synthesizes an adversarial test suite based on chaos intensity (0.0 to 1.0)
         or explicit test case selections.
+        Supports deterministic replay when a seed or rng is provided.
+        Preserves unseeded random behavior when both are omitted.
         """
         # An explicit selection, including an empty list, takes precedence.
         if target_ids is not None:
@@ -122,5 +127,8 @@ class Saboteur:
         else:
             sample_count = min(4, len(all_faults))
 
+        effective_rng = rng or (random.Random(seed) if seed is not None else self._rng)
+        if effective_rng is not None:
+            return effective_rng.sample(all_faults, sample_count)
         return random.sample(all_faults, sample_count)
 
