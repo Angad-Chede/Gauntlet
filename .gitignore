@@ -47,8 +47,15 @@ htmlcov/
 runs/*.json
 runs/*
 !runs/.gitkeep
+!runs/run_d42996d50d.json
 evidence/*
 !evidence/.gitkeep
+!evidence/evidence_run_d42996d50d.json
+
+# Local Framework State & Scratch
+.entire/
+.agents/
+scratch/
 
 # OS
 .DS_Store
