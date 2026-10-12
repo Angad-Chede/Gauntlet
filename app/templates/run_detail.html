@@ -2,46 +2,100 @@
 {% block title %}Run {{ run_id }} — GAUNTLET{% endblock %}
 {% block heading %}Run inspector{% endblock %}
 {% block actions %}
-<a class="btn btn-secondary" href="/runs/{{ run_id }}/evidence">Evidence</a>
-<a class="btn btn-primary" href="/new">New test run</a>
+<a class="btn glass" href="/runs/{{ run_id }}/evidence">
+  <svg class="i" aria-hidden="true"><use href="#i-doc"/></svg>
+  <span class="lbl">Evidence</span>
+</a>
+<a class="btn pearl" href="/new">
+  <svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>
+  <span class="lbl">New test run</span>
+</a>
 {% endblock %}
+
 {% block content %}
-<nav class="subnav" aria-label="Run sections">
-  <a class="is-active" href="/runs/{{ run_id }}">Inspector &amp; report</a>
-  <a href="/runs/{{ run_id }}/evidence">Evidence</a>
-  <a href="/runs/{{ run_id }}/hardening">Hardening</a>
-</nav>
-
-<p class="mono" id="run-header-id" translate="no">{{ run_id }}</p>
-<div id="run-meta" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 16px"></div>
-
-<div id="verdict" class="verdict">
+<div class="cols">
   <div>
-    <div class="progress-note"><span class="spinner"></span> Loading run…</div>
-  </div>
-</div>
+    <header class="hd">
+      <p class="kicker">Run record</p>
+      <div class="idrow">
+        <h1 class="mono" id="run-header-id" translate="no">{{ run_id }}</h1>
+        <button class="icon-btn" type="button" id="copy-run-top" title="Copy run ID" aria-label="Copy run ID">
+          <svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>
+        </button>
+      </div>
+      <ul class="meta" id="run-meta">
+        <li><span class="k">Loading metadata…</span></li>
+      </ul>
+      <nav class="seg" aria-label="Run sections" id="run-seg">
+        <a href="/runs/{{ run_id }}" class="is-active" aria-current="page">Report</a>
+        <a href="/runs/{{ run_id }}/evidence">Evidence</a>
+        <a href="/runs/{{ run_id }}/hardening" id="tab-hardening">Hardening</a>
+      </nav>
+    </header>
 
-<p class="notice notice-warn" id="no-fault-notice" hidden style="margin-top:16px">No faults were injected. Resilience, fault tolerance, and recovery scores are unavailable. Safety is still evaluated.</p>
-
-<section class="metrics" id="scores" style="margin-top:16px"></section>
-
-<div class="page-grid grid-2">
-  <section class="panel panel-pad">
-    <div class="panel-h"><h2>Execution timeline</h2><span class="muted">Expand a step for payload detail</span></div>
-    <div class="timeline" id="timeline"></div>
-  </section>
-  <div class="page-grid">
-    <section class="panel panel-pad">
-      <div class="panel-h"><h2>Injected faults</h2></div>
-      <div class="fault-list" id="faults"></div>
+    <!-- Main frosted glass sheet (HERO) -->
+    <section class="gcard" id="verdict" aria-labelledby="vt" data-spot>
+      <div class="hero-g">
+        <div>
+          <p class="lab">Referee verdict</p>
+          <div class="progress-note"><span class="spinner" aria-hidden="true"></span> Loading run details…</div>
+        </div>
+      </div>
     </section>
-    <section class="panel panel-pad">
-      <div class="panel-h"><h2>Next</h2></div>
-      <div class="topbar-actions" id="next-steps" style="flex-wrap:wrap"></div>
-    </section>
+
+    <p class="notice notice-warn" id="no-fault-notice" hidden>No faults were injected. Resilience, fault tolerance, and recovery scores are unavailable. Safety is still evaluated.</p>
+
+    <!-- Content reading panel (solid dark panel, hairline separated rows) -->
+    <div class="gpanel">
+      <!-- Section 01: What was injected -->
+      <section class="step" id="s1">
+        <div class="step-h">
+          <span class="no">01</span>
+          <h3>What was injected</h3>
+        </div>
+        <p class="sub" id="faults-sub">Applied chaos scenarios and fault vectors from the catalog.</p>
+        <div class="list" id="faults">
+          <div class="skeleton" style="height:72px"></div>
+        </div>
+      </section>
+
+      <!-- Section 02: What the agent did -->
+      <section class="step" id="s2">
+        <div class="step-h">
+          <span class="no">02</span>
+          <h3>What the agent did</h3>
+        </div>
+        <p class="sub">Sequential telemetry rail. Expand any step to inspect the full structured payload.</p>
+        <ol class="tl" id="timeline">
+          <li class="row ev"><div class="skeleton" style="height:60px;width:100%"></div></li>
+        </ol>
+        <p class="note" id="timing-note" hidden></p>
+      </section>
+
+      <!-- Section 03: What to do next -->
+      <section class="step" id="s3">
+        <div class="step-h">
+          <span class="no">03</span>
+          <h3>What to do next</h3>
+        </div>
+        <p class="sub">Verify cryptographic evidence, review advisory suggestions, or replay.</p>
+        <div class="list" id="next-steps">
+          <div class="skeleton" style="height:60px"></div>
+        </div>
+      </section>
+    </div>
   </div>
+
+  <!-- Sticky outline with scrollspy (visible on viewports >= 1240px) -->
+  <aside class="outline" aria-label="On this page">
+    <h5>On this page</h5>
+    <a href="#s1" class="on">1 What was injected</a>
+    <a href="#s2">2 What the agent did</a>
+    <a href="#s3">3 What to do next</a>
+  </aside>
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script type="module" src="/static/js/run-detail.js"></script>
 {% endblock %}
