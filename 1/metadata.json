@@ -1,0 +1,88 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4Q0E3JWF6G2GGTNCM0JYWTQ",
+  "session_id": "4f76fb2e-e311-4bc9-9194-798fe36c8c99",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-12T02:52:58.574485Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "app/models.py",
+    "app/saboteur.py"
+  ],
+  "agent": "Antigravity",
+  "model": "",
+  "turn_id": "6bf1ac233893",
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-12T02:52:58.5456262Z",
+    "agent_lines": 11,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 11,
+    "total_lines_changed": 11,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 5622,
+      "user_lines_removed": 3990,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "app/main.py": 11,
+        "app/static/css/gauntlet.css": 1646,
+        "app/static/js/evidence.js": 185,
+        "app/static/js/gauntlet.js": 95,
+        "app/static/js/hardening.js": 118,
+        "app/static/js/new-run.js": 61,
+        "app/static/js/overview.js": 219,
+        "app/static/js/run-detail.js": 341,
+        "app/static/js/settings.js": 43,
+        "app/static/landing/landing.css": 891,
+        "app/static/landing/landing.js": 451,
+        "app/templates/base.html": 128,
+        "app/templates/evidence.html": 117,
+        "app/templates/hardening.html": 62,
+        "app/templates/landing/index.html": 386,
+        "app/templates/new_run.html": 128,
+        "app/templates/not_found.html": 42,
+        "app/templates/overview.html": 106,
+        "app/templates/run_detail.html": 84,
+        "app/templates/settings.html": 133,
+        "docs/landing-claims.md": 4,
+        "reference/gauntlet-twilight-glass-prototype.html": 321,
+        "tests/test_landing_routes.py": 50
+      },
+      "user_removed_per_file": {
+        "app/static/css/gauntlet.css": 671,
+        "app/static/js/evidence.js": 60,
+        "app/static/js/gauntlet.js": 35,
+        "app/static/js/hardening.js": 34,
+        "app/static/js/new-run.js": 20,
+        "app/static/js/overview.js": 81,
+        "app/static/js/run-detail.js": 63,
+        "app/static/js/settings.js": 15,
+        "app/static/landing/landing.css": 1345,
+        "app/static/landing/landing.js": 507,
+        "app/templates/base.html": 78,
+        "app/templates/evidence.html": 21,
+        "app/templates/hardening.html": 16,
+        "app/templates/landing/index.html": 832,
+        "app/templates/new_run.html": 58,
+        "app/templates/not_found.html": 5,
+        "app/templates/overview.html": 56,
+        "app/templates/run_detail.html": 30,
+        "app/templates/settings.html": 27,
+        "tests/test_landing_routes.py": 36
+      }
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+# GAUNTLET — Emergency Real Execution + Vercel Deployment Sprint
+
+We have approximately 10 hours left before hackathon submission. Work directly in the existing repository. Do not rebuild the project.
+
+Repository: `C:\Users\USER\OneDrive\Desktop\gauntlet`
+
+### Mission
+
+Deliver a working, publicly accessible GAUNTLET demo and prove at least one genuine end-to-end fault-injection experiment.
+
+### Phase 1 — Inspect before editing
+
+1. Inspect `git status --short`, current diffs, `vercel.json`, `requirements.txt`, `app/main.py`, and the orchestrator/fault/evidence modules.
+2. Preserve every current uncommitted change. Do not reset, clean, stash, or overwrite existing work.
+3. Run the existing tests and compilation checks.
+4. Trace a run from the UI request to actual execution, evaluation, evidence creation, and response.
+5. Identify which paths use stored fixtures, mocks, fixed scores, or predetermined verdicts.
+
+### Phase 2 — Make one experiment genuinely execute
+
+Use the existing architecture. Select one safe, controlled HTTP 503 or timeout scenario.
+
+Demonstrate that:
+- A real request or operation executes against a test subject.
+- The fault changes the runtime outcome.
+- The observed result is captured.
+- Evaluation is derived from the observed result.
+- Evidence corresponds to the run and its SHA-256 seal verifies.
+- A repair/replay is attempted only if actual repair behavior exists and can be measured.
+
+Do not replace stored demo data with fake live results. Label baseline fixtures clearly.
+
+### Phase 3 — Deploy to Vercel
+
+1. Validate the existing deployment configuration and actual FastAPI entry point.
+2. Check Python dependencies, template files, fonts, images, static assets, and routing.
+3. Confirm that the bundled baseline fixture works after deployment.
+4. Use the existing Vercel CLI or linked Git integration to deploy a preview first.
+5. Test the public landing page, workbench, baseline run, evidence verification, and health endpoint.
+6. Promote to production only if the preview works and there is enough time.
+7. Do not create a new Git commit or push until I review the changes and test report.
+
+### Phase 4 — Storage and observability
+
+- Determine whether live run creation writes to `runs/` or `evidence/`.
+- Ensure the deployed application does not depend on writable persistent local files.
+- If durable storage is required, implement it only if a configured, accessible service already exists and the integration can be completed safely. Otherwise, explicitly document that live runs are ephemeral and preserve the working demo.
+- Verify Neatlogs trace creation and remote ingestion separately.
+- Do not claim MCP connectivity until the agent successfully invokes an actual MCP tool.
+- Do not spend time on AWS unless all critical local and deployment tasks are complete.
+
+### Constraints
+
+- No fabricated metrics, traces, test results, or repair improvements.
+- Do not expose credentials or commit `.env`.
+- Do not modify or rewrite published Git history.
+- Do not disable Entire hooks. Allow enough time for normal commit hooks.
+- Avoid unnecessary dependencies, redesigns, and unrelated changes.
+- Run relevant tests after every significant change.
+- If Vercel authentication or a required environment variable is missing, stop and report the exact blocker instead of inventing success.
+
+### Report back
+
+Give me:
+1. What was already working.
+2. What was genuinely simulated.
+3. What you changed.
+4. Test results.
+5. The preview and production URLs, if successfully deployed.
+6. Evidence that the real fault executed and the verdict was computed dynamically.
+7. Remaining MCP, remote tracing, and persistent storage limitations.
+8. Exact files changed and a safe commit/push recommendation.
+
+Start immediately. Optimize for a truthful, working submission, not additional features.
