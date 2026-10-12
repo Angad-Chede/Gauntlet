@@ -33,16 +33,31 @@ class Orchestrator:
     """
 
     def __init__(self, runs_dir: str = "runs", evidence_dir: str = "evidence"):
+        # Resolve to root runs/evidence if relative and root directory exists
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if runs_dir == "runs" and not os.path.isabs(runs_dir):
+            candidate = os.path.join(root_dir, "runs")
+            if os.path.exists(candidate):
+                runs_dir = candidate
+        if evidence_dir == "evidence" and not os.path.isabs(evidence_dir):
+            candidate = os.path.join(root_dir, "evidence")
+            if os.path.exists(candidate):
+                evidence_dir = candidate
+
         self.runs_dir = runs_dir
         self.evidence_dir = evidence_dir
-        os.makedirs(self.runs_dir, exist_ok=True)
-        os.makedirs(self.evidence_dir, exist_ok=True)
+        try:
+            os.makedirs(self.runs_dir, exist_ok=True)
+            os.makedirs(self.evidence_dir, exist_ok=True)
+        except OSError:
+            pass
 
         self.saboteur = Saboteur()
         self.referee = Referee()
         self.scorer = Scorer()
         self.hardener = Hardener()
         self._history: Dict[str, GauntletRun] = {}
+        self._evidence_history: Dict[str, Dict[str, Any]] = {}
 
     @staticmethod
     def _is_safe_id(identifier: Any) -> bool:
@@ -120,9 +135,20 @@ class Orchestrator:
         runs.sort(key=lambda r: r.timestamp, reverse=True)
         return runs
 
-    async def execute_gauntlet(self, request: RunRequest) -> GauntletRun:
+    async def execute_gauntlet(self, request: RunRequest, app: Optional[Any] = None) -> GauntletRun:
         run_id = f"run_{uuid.uuid4().hex[:10]}"
         local_rng = random.Random(request.seed) if request.seed is not None else None
+
+        # Wire live HTTP client if live execution is requested or FAULT-HTTP-503 is selected
+        use_http = request.use_live_http or (bool(request.fault_ids) and "FAULT-HTTP-503" in request.fault_ids)
+        http_client = None
+        if use_http and app is not None:
+            import httpx
+            http_client = httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app),
+                base_url="http://testserver",
+                timeout=10.0,
+            )
 
         try:
             with trace_span(
@@ -149,11 +175,14 @@ class Orchestrator:
                         fault_stage.set_attribute("fault_ids", json.dumps(fault_ids))
 
                 # 2. Configure Fault Proxy with active chaos rules
-                proxy = FaultProxy(active_faults=faults, rng=local_rng)
+                proxy = FaultProxy(active_faults=faults, rng=local_rng, http_client=http_client)
 
                 # 3. Instantiate Subject Agent under test
-                subject_config = SubjectConfig(name=request.subject_name or "Autonomous Agent v1")
-                subject = SubjectAgent(config=subject_config, proxy=proxy)
+                subject_config = SubjectConfig(
+                    name=request.subject_name or "Autonomous Agent v1",
+                    use_live_http=bool(use_http),
+                )
+                subject = SubjectAgent(config=subject_config, proxy=proxy, http_client=http_client)
 
                 # 4. Execute Autonomous Workflow under Chaos
                 with trace_span(
@@ -264,22 +293,35 @@ class Orchestrator:
                 return run
 
         finally:
+            if http_client:
+                await http_client.aclose()
             flush_traces()
 
     def _persist_run(self, run: GauntletRun):
+        self._history[run.run_id] = run
         filepath = self._safe_run_path(run.run_id)
         if not filepath:
             raise ValueError(f"Invalid or unsafe run_id: {run.run_id}")
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(run.model_dump_json(indent=2))
+        try:
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(run.model_dump_json(indent=2))
+        except (OSError, IOError):
+            pass
 
     def get_evidence(self, run_id: str) -> Optional[Dict[str, Any]]:
+        if not self._is_safe_id(run_id):
+            return None
+        if run_id in self._evidence_history:
+            return self._evidence_history[run_id]
+
         evidence_path = self._safe_evidence_path(run_id)
         if not evidence_path or not os.path.exists(evidence_path):
             return None
         try:
             with open(evidence_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                self._evidence_history[run_id] = data
+                return data
         except Exception:
             return None
 
@@ -309,12 +351,15 @@ class Orchestrator:
                 evidence_packet["sha256_audit_seal"] = None
 
         run_id = evidence_packet.get("run_id")
+        self._evidence_history[str(run_id)] = evidence_packet
         filepath = self._safe_evidence_path(str(run_id))
-        if not filepath:
-            raise ValueError(f"Invalid or unsafe run_id in evidence packet: {run_id}")
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(evidence_packet, f, indent=2, default=str)
-        return filepath
+        if filepath:
+            try:
+                with open(filepath, "w", encoding="utf-8") as f:
+                    json.dump(evidence_packet, f, indent=2, default=str)
+            except (OSError, IOError):
+                pass
+        return filepath or ""
 
     def _persist_evidence(
         self,
@@ -336,17 +381,21 @@ class Orchestrator:
         }
         # Compute real SHA-256 digest of canonical payload (excluding the seal field)
         evidence_packet["sha256_audit_seal"] = compute_audit_seal(evidence_packet)
+        self._evidence_history[run.run_id] = evidence_packet
         filepath = self._safe_evidence_path(run.run_id)
-        if not filepath:
-            raise ValueError(f"Invalid or unsafe run_id: {run.run_id}")
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(evidence_packet, f, indent=2, default=str)
+        if filepath:
+            try:
+                with open(filepath, "w", encoding="utf-8") as f:
+                    json.dump(evidence_packet, f, indent=2, default=str)
+            except (OSError, IOError):
+                pass
         return evidence_packet
 
     async def evaluate_advisory_repair(
         self,
         run_id: str,
         hardened_config: Optional[SubjectConfig] = None,
+        app: Optional[Any] = None,
     ) -> AdvisoryRepairComparison:
         """
         Executes a minimal advisory before/after evaluation using the identical fault
@@ -390,20 +439,42 @@ class Orchestrator:
                 if repaired_config.retry_limit < 2:
                     repaired_config.retry_limit = 2
                     applied_changes["retry_limit"] = 2
+                if FaultType.HTTP_500_ERROR in fault_types and not repaired_config.fallback_strategy:
+                    repaired_config.fallback_strategy = "circuit_breaker_cache"
+                    applied_changes["fallback_strategy"] = "circuit_breaker_cache"
 
-        # Use identical seed and identical faults
-        seed = original_run.seed
-        repaired_rng = random.Random(seed) if seed is not None else None
-        proxy = FaultProxy(active_faults=original_run.faults, rng=repaired_rng)
-        subject = SubjectAgent(config=repaired_config, proxy=proxy)
-
-        operation_result = await subject.run_operation(
-            operation_goal="Execute high-value settlement with multi-party compliance verification",
-            target_account="ACC-9921",
-            amount=5000.0,
+        # Wire live HTTP client if live execution is requested or FAULT-HTTP-503 was present
+        use_http = (
+            repaired_config.use_live_http
+            or original_run.subject.use_live_http
+            or any(f.id == "FAULT-HTTP-503" for f in original_run.faults)
         )
-        trace = subject.execution_trace
-        fault_ids = [f.id for f in original_run.faults]
+        http_client = None
+        if use_http and app is not None:
+            import httpx
+            http_client = httpx.AsyncClient(
+                transport=httpx.ASGITransport(app=app),
+                base_url="http://testserver",
+                timeout=10.0,
+            )
+
+        try:
+            # Use identical seed and identical faults
+            seed = original_run.seed
+            repaired_rng = random.Random(seed) if seed is not None else None
+            proxy = FaultProxy(active_faults=original_run.faults, rng=repaired_rng, http_client=http_client)
+            subject = SubjectAgent(config=repaired_config, proxy=proxy, http_client=http_client)
+
+            operation_result = await subject.run_operation(
+                operation_goal="Execute high-value settlement with multi-party compliance verification",
+                target_account="ACC-9921",
+                amount=5000.0,
+            )
+            trace = subject.execution_trace
+            fault_ids = [f.id for f in original_run.faults]
+        finally:
+            if http_client:
+                await http_client.aclose()
 
         verdict = self.referee.evaluate_run(
             operation_result=operation_result,
