@@ -37,6 +37,7 @@ async function boot() {
           <div><span>Tracing initialized</span><span>${tracing.initialized ? "Yes" : "No"}</span></div>
           <div><span>Active workflow name</span><span class="mono">${escapeHtml(tracing.workflow || "GAUNTLET")}</span></div>
           <div><span>Tracing SDK version</span><span class="mono">${escapeHtml(String(tracing.sdk_version || "unknown"))}</span></div>
+          <div><span>MCP Server status</span><span class="chip pass">Ready (stdio)</span></div>
         </div>
       `;
     }

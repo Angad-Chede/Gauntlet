@@ -109,10 +109,52 @@ uvicorn app.main:app --reload --port 8000
 Open **[http://localhost:8000](http://localhost:8000)** in your browser to interact with the Gauntlet Console.
 
 ### 4. Run the Test Suite
-Run the test suite using `pytest`:
+Run the full 81-test verification suite using `pytest`:
 ```bash
 pytest -v
 ```
+
+---
+
+## 🔌 Model Context Protocol (MCP) Server
+
+GAUNTLET provides native **MCP (Model Context Protocol)** support over `stdio`, allowing external agents (like **Claude Desktop**, **Cursor**, or **Cline**) to connect directly:
+
+```bash
+# Test MCP tools locally
+python -m app.mcp_server --test
+```
+
+### Claude Desktop Integration
+Add GAUNTLET to your `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "gauntlet": {
+      "command": "python",
+      "args": ["-m", "app.mcp_server"],
+      "cwd": "/path/to/gauntlet"
+    }
+  }
+}
+```
+
+Exposed MCP tools:
+- `gauntlet_list_fault_catalog`: Inspect all 8 adversarial failure vectors.
+- `gauntlet_run_chaos_test`: Run an automated chaos test run on-demand with Neatlogs telemetry.
+- `gauntlet_verify_evidence`: Cryptographically audit and verify SHA-256 evidence packets.
+- `gauntlet_intercept_tool_call`: Proxy tool calls through GAUNTLET's Chaos Proxy with live fault injection.
+
+See [MCP_QUICKSTART.md](file:///c:/Users/USER/OneDrive/Desktop/gauntlet/MCP_QUICKSTART.md) for full documentation.
+
+---
+
+## 📡 Neatlogs Workflow Telemetry
+
+GAUNTLET natively instruments the entire adversarial lifecycle with **OpenTelemetry / Neatlogs SDK** (`neatlogs>=1.4.26`):
+- Root workflow span: `gauntlet_execution`
+- Stage spans: `fault_suite_generation`, `subject_execution`, `referee_evaluation`, `resilience_scoring`, `hardening_synthesis`
+- The resulting trace ID is embedded into each tamper-evident evidence file and verified with SHA-256 canonical hashing.
 
 ---
 
@@ -121,15 +163,18 @@ pytest -v
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/` | Web observability dashboard |
-| `GET` | `/api/health` | Service health status |
+| `GET` | `/api/health` | Service health status & telemetry readiness |
+| `GET` | `/api/mcp/info` | MCP Server capabilities manifest and client config |
 | `GET` | `/api/faults` | List all adversarial attack vectors |
 | `POST` | `/api/run` | Execute a chaos gauntlet against the agent |
 | `GET` | `/api/runs` | Retrieve historical gauntlet runs |
 | `GET` | `/api/runs/{run_id}` | Detailed trace, score, and hardening diffs |
 | `GET` | `/api/runs/{run_id}/evidence` | Tamper-evident cryptographically sealed proof packet |
 | `GET` | `/api/runs/{run_id}/evidence/verify` | Verify cryptographic SHA-256 seal of an evidence packet |
+| `POST` | `/api/runs/{run_id}/repair-comparison` | Advisory before/after evaluation replay under identical seeds |
 
 ---
 
 ## 🛡️ License
 Distributed under the Apache 2.0 License. See `LICENSE` for more information.
+

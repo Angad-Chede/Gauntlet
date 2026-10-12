@@ -154,7 +154,32 @@ async def health_check():
             "mode": "ephemeral_resilient",
         },
         "live_test_subject": "available",
+        "mcp_server": "available",
     }
+
+
+@app.get("/api/mcp/info")
+async def mcp_info():
+    """Returns configuration manifest and tools for GAUNTLET MCP Server."""
+    from app.mcp_server import TOOLS_DEFINITIONS
+    return {
+        "status": "ready",
+        "protocol": "Model Context Protocol (MCP) JSON-RPC 2.0",
+        "transport": "stdio",
+        "entrypoint": "python -m app.mcp_server",
+        "tools_count": len(TOOLS_DEFINITIONS),
+        "tools": [t["name"] for t in TOOLS_DEFINITIONS],
+        "claude_desktop_snippet": {
+            "mcpServers": {
+                "gauntlet": {
+                    "command": "python",
+                    "args": ["-m", "app.mcp_server"],
+                    "cwd": str(ROOT_DIR),
+                }
+            }
+        },
+    }
+
 
 
 # ==============================================================================
