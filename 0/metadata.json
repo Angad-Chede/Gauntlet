@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4Q0FYGWNS28SMFZ06939VMM",
+  "session_id": "4c065603-40db-4f44-bd99-9cd184f00f88",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-12T02:53:57.897778Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "tests/test_landing_routes.py"
+  ],
+  "agent": "Antigravity",
+  "model": "",
+  "turn_id": "c1cd040226b1",
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-12T02:53:57.8844703Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 50,
+    "human_removed": 0,
+    "total_committed": 50,
+    "total_lines_changed": 50,
+    "agent_percentage": 0,
+    "metric_version": 2
+  }
+}
