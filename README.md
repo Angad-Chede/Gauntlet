@@ -6,6 +6,13 @@
 
 **Break your agent before production does. Then let GAUNTLET fix it.**
 
+<p align="center">
+  <img src="docs/images/app.png" alt="app" width="85%">
+  <br>
+  <em>its app</em>
+</p>
+
+
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -255,15 +262,15 @@ neatlogs gives GAUNTLET full visibility into its own pipeline. Each run is a sin
 <!-- Paste your neatlogs screenshots below. Replace the file names with your own. -->
 
 <p align="center">
-  <img src="docs/images/neatlogs-trace.png" alt="neatlogs trace of a GAUNTLET run" width="85%">
+  <img src="docs/images/neatlog.png" alt="neatlogs trace of a GAUNTLET run" width="85%">
   <br>
   <em>Full trace of a GAUNTLET run in neatlogs, from gauntlet_execution down to each stage span.</em>
 </p>
 
 <p align="center">
-  <img src="docs/images/neatlogs-debug.png" alt="neatlogs debugging view" width="85%">
+  <img src="docs/images/neatlog1.png" alt="neatlogs debugging view" width="85%">
   <br>
-  <em>[Caption: what this screenshot shows, e.g. the failing span that led to a fix.]</em>
+  <em>Graphs exalaining</em>
 </p>
 
 <br>
@@ -277,15 +284,15 @@ Entire was used to capture the AI-assisted development of GAUNTLET. Its checkpoi
 <!-- Paste your Entire screenshots below. Replace the file names with your own. -->
 
 <p align="center">
-  <img src="docs/images/entire-checkpoints.png" alt="Entire checkpoints for GAUNTLET" width="85%">
+  <img src="docs/images/entire.png" alt="Entire checkpoints for GAUNTLET" width="85%">
   <br>
   <em>Entire checkpoints showing progress and key decisions while building GAUNTLET.</em>
 </p>
 
 <p align="center">
-  <img src="docs/images/entire-graph.png" alt="Entire graph view" width="85%">
+  <img src="docs/images/entire2.png" alt="Entire graph view" width="85%">
   <br>
-  <em>[Caption: what this screenshot shows.]</em>
+  <em>commits</em>
 </p>
 
 <br>
@@ -299,15 +306,9 @@ cfo.ai was used to turn GAUNTLET from a technical demo into a product with a cle
 <!-- Paste your cfo.ai screenshots below. Replace the file names with your own. -->
 
 <p align="center">
-  <img src="docs/images/cfo-ai-plan.png" alt="cfo.ai business plan output" width="85%">
+  <img src="docs/images/cfo.png" alt="cfo.ai business plan output" width="85%">
   <br>
   <em>cfo.ai output used to build the GAUNTLET business plan.</em>
-</p>
-
-<p align="center">
-  <img src="docs/images/cfo-ai-pricing.png" alt="cfo.ai pricing analysis" width="85%">
-  <br>
-  <em>[Caption: what this screenshot shows, e.g. pricing or unit-economics analysis.]</em>
 </p>
 
 ---
