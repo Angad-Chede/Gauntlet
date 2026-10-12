@@ -17,12 +17,14 @@ class FaultProxy:
         active_faults: Optional[List[FaultDefinition]] = None,
         seed: Optional[int] = None,
         rng: Optional[random.Random] = None,
+        http_client: Optional[Any] = None,
     ):
         self.active_faults: Dict[str, FaultDefinition] = {
             f.id: f for f in (active_faults or [])
         }
         self.intercept_log: List[Dict[str, Any]] = []
         self._fault_invocation_counts: Dict[str, int] = {}
+        self._http_client = http_client
         if rng is not None:
             self._rng = rng
         elif seed is not None:
@@ -135,7 +137,25 @@ class FaultProxy:
 
         elif fault.fault_type == FaultType.HTTP_500_ERROR:
             status_code = params.get("status_code", 500)
-            raise RuntimeError(f"HTTP {status_code} Internal Server Error from target service [{endpoint_name}]")
+            retry_after = params.get("retry_after")
+            if self._http_client and endpoint_name == "settle_transfer":
+                fault_hdr = str(status_code)
+                try:
+                    resp = await self._http_client.post(
+                        "/api/test-subject/settle",
+                        json={"source": args[0] if args else "ACC-9921", "dest": "ACC-RECEIVER-441", "amount": 5000.0},
+                        headers={"X-Gauntlet-Fault": fault_hdr},
+                    )
+                    retry_after = resp.headers.get("Retry-After") or retry_after
+                    status_code = resp.status_code
+                except Exception:
+                    pass
+
+            msg_status = "Service Unavailable" if status_code == 503 else "Internal Server Error"
+            msg = f"HTTP {status_code} {msg_status} from target service [{endpoint_name}]"
+            if retry_after is not None:
+                msg += f". Retry-After: {retry_after}s"
+            raise RuntimeError(msg)
 
         elif fault.fault_type == FaultType.RATE_LIMIT_429:
             retry_after = params.get("retry_after", 30)

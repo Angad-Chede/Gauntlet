@@ -22,6 +22,7 @@ class SubjectAgent:
         config: Optional[SubjectConfig] = None,
         proxy: Optional[FaultProxy] = None,
         sleep_fn: Optional[Callable[[float], Awaitable[None]]] = None,
+        http_client: Optional[Any] = None,
     ):
         self.config = config or SubjectConfig()
         self.proxy = proxy or FaultProxy()
@@ -29,6 +30,7 @@ class SubjectAgent:
         self._circuit_open = False
         self._consecutive_failures = 0
         self._sleep_fn = sleep_fn or asyncio.sleep
+        self._http_client = http_client
 
     @staticmethod
     def parse_retry_after(error: Any) -> Optional[float]:
@@ -125,6 +127,21 @@ class SubjectAgent:
             "settled_amount": amount,
             "status": "COMPLETED"
         }
+
+    async def _tool_settle_transfer_live(self, source_id: str, dest_id: str, amount: float) -> Dict[str, Any]:
+        if not self._http_client:
+            return self._tool_settle_transfer(source_id, dest_id, amount)
+        resp = await self._http_client.post(
+            "/api/test-subject/settle",
+            json={"source": source_id, "dest": dest_id, "amount": amount},
+        )
+        if resp.status_code >= 400:
+            retry_after = resp.headers.get("Retry-After")
+            err_msg = f"HTTP {resp.status_code} {resp.reason_phrase}"
+            if retry_after:
+                err_msg += f". Retry-After: {retry_after}s"
+            raise RuntimeError(err_msg)
+        return resp.json()
 
     async def run_operation(self, operation_goal: str, target_account: str = "ACC-9921", amount: float = 2500.0) -> Dict[str, Any]:
         """
@@ -278,9 +295,14 @@ class SubjectAgent:
             )
 
             try:
+                target_settle_fn = (
+                    self._tool_settle_transfer_live
+                    if (self._http_client or self.config.use_live_http)
+                    else self._tool_settle_transfer
+                )
                 settle_res = await self.proxy.execute_intercepted(
                     "settle_transfer",
-                    self._tool_settle_transfer,
+                    target_settle_fn,
                     target_account,
                     "ACC-RECEIVER-441",
                     amount
