@@ -7,7 +7,7 @@
 **Break your agent before production does. Then let GAUNTLET fix it.**
 
 <p align="center">
-  <img src="docs/images/app.png" alt="app" width="85%">
+  <img src="docs/image/app.png" alt="app" width="85%">
   <br>
   <em>its app</em>
 </p>
@@ -120,7 +120,7 @@ Gauntlet
 ├── evidence/                # Tamper-evident cryptographic proof packets
 ├── docs/
 │   ├── business-plan.md     # Market opportunity, TAM, pricing model
-│   └── images/              # Screenshots used in this README
+│   └── image/              # Screenshots used in this README
 ├── .env.example             # Environment configuration template
 ├── requirements.txt         # Core dependencies
 └── README.md
@@ -262,13 +262,13 @@ neatlogs gives GAUNTLET full visibility into its own pipeline. Each run is a sin
 <!-- Paste your neatlogs screenshots below. Replace the file names with your own. -->
 
 <p align="center">
-  <img src="docs/images/neatlog.png" alt="neatlogs trace of a GAUNTLET run" width="85%">
+  <img src="docs/image/neatlog.png" alt="neatlogs trace of a GAUNTLET run" width="85%">
   <br>
   <em>Full trace of a GAUNTLET run in neatlogs, from gauntlet_execution down to each stage span.</em>
 </p>
 
 <p align="center">
-  <img src="docs/images/neatlog1.png" alt="neatlogs debugging view" width="85%">
+  <img src="docs/image/neatlog1.png" alt="neatlogs debugging view" width="85%">
   <br>
   <em>Graphs exalaining</em>
 </p>
@@ -284,13 +284,13 @@ Entire was used to capture the AI-assisted development of GAUNTLET. Its checkpoi
 <!-- Paste your Entire screenshots below. Replace the file names with your own. -->
 
 <p align="center">
-  <img src="docs/images/entire.png" alt="Entire checkpoints for GAUNTLET" width="85%">
+  <img src="docs/image/entire.png" alt="Entire checkpoints for GAUNTLET" width="85%">
   <br>
   <em>Entire checkpoints showing progress and key decisions while building GAUNTLET.</em>
 </p>
 
 <p align="center">
-  <img src="docs/images/entire2.png" alt="Entire graph view" width="85%">
+  <img src="docs/image/entire2.png" alt="Entire graph view" width="85%">
   <br>
   <em>commits</em>
 </p>
@@ -306,7 +306,7 @@ cfo.ai was used to turn GAUNTLET from a technical demo into a product with a cle
 <!-- Paste your cfo.ai screenshots below. Replace the file names with your own. -->
 
 <p align="center">
-  <img src="docs/images/cfo.png" alt="cfo.ai business plan output" width="85%">
+  <img src="docs/image/cfo.png" alt="cfo.ai business plan output" width="85%">
   <br>
   <em>cfo.ai output used to build the GAUNTLET business plan.</em>
 </p>
