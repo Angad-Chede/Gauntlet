@@ -43,6 +43,7 @@ class SubjectConfig(BaseModel):
     base_retry_delay: float = 0.1
     max_retry_delay: float = 30.0
     retry_delay_scale: float = 0.01
+    use_live_http: bool = False
 
 
 class StepLog(BaseModel):
@@ -106,6 +107,7 @@ class RunRequest(BaseModel):
     chaos_intensity: float = Field(0.5, ge=0.0, le=1.0)
     enable_auto_harden: bool = True
     seed: Optional[int] = Field(default=None, description="Optional seed for deterministic chaos replay")
+    use_live_http: bool = Field(default=False, description="Execute operations against live HTTP test subject")
 
 
 class AdvisoryRepairComparison(BaseModel):

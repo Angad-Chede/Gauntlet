@@ -35,6 +35,15 @@ class Saboteur:
                 description="Simulates an upstream core service failure returning an unhandled 500 Internal Server Error."
             ),
             FaultDefinition(
+                id="FAULT-HTTP-503",
+                name="Banking Service Unavailable (HTTP 503)",
+                fault_type=FaultType.HTTP_500_ERROR,
+                target_endpoint="settle_transfer",
+                parameters={"status_code": 503, "retry_after": 2},
+                severity="HIGH",
+                description="Injects real HTTP 503 Service Unavailable with Retry-After header on transfer settlement to test genuine agent backoff and circuit-breaker."
+            ),
+            FaultDefinition(
                 id="FAULT-RATE-LIMIT-429",
                 name="Stripe Tier-1 Rate Limit Burst",
                 fault_type=FaultType.RATE_LIMIT_429,
