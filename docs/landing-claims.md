@@ -14,9 +14,13 @@ Every claim made on the GAUNTLET landing page (`/` and `/landing`) is audited an
 | 8 | Neatlogs workflow telemetry & OpenTelemetry span instrumentation | `app/tracing.py`, `app/main.py` | `IMPLEMENTED` | SDK integration (`neatlogs==1.4.26`), health endpoint `/api/health` reports status `tracing.available=true` |
 | 9 | Entire local Git checkpoint tracking for developer sessions | `refs/entire/checkpoints/ZS/01M4KSQKWSP4YN70VPDY5MBCZS`, `.entire/` | `IMPLEMENTED` | Local git refs and metadata recorded in repo history |
 | 10 | cfo.ai financial business plan & scenario stress-test | `docs/business-plan.md`, `docs/cfo-ai-evidence.md`, `docs/financial-model.csv` | `EXTERNALLY VERIFIED` | Authentic Ari model in founder workspace `aissms-institute-of-information-technology-0c3d2ff5` |
+| 11 | Atmospheric painted background art attribution | `docs/image/Twilight Fortress Among Stormy Cliffs.png`, `app/templates/landing/index.html` | `IMPLEMENTED` | AI-generated background art explicitly credited in footer; bottom-right sparkle mark preserved |
+| 12 | Recorded runs count transparency | `runs/` directory (134 on-disk records) | `TESTED` | Labeled accurately as local execution history including automated test harness runs |
 
 ## Limitations & Honesty Constraints
 1. **Local Disk Persistence**: Runs persist to local disk in `runs/` and `evidence/`; no multi-tenant cloud authentication or SaaS enterprise database is claimed.
 2. **Advisory Hardening**: Remediation patches are suggested diffs for operator review; they are never executed against local code repositories without manual approval.
 3. **Tamper-Evidence vs Tamper-Proof**: Cryptographic SHA-256 seal guarantees payload content integrity and detection of post-run alteration; it does not provide public-key identity signatures (PKI) or guarantee agent safety.
 4. **No Deterministic Replay Without Seed**: Unseeded chaos executions rely on pseudo-random state transitions; reproducible replay requires explicit seeds.
+5. **Atmospheric Art Resolution**: Source painting is AI-generated (1678x937), Lanczos-upscaled to 1920w; grain overlay is utilized to maintain crisp aesthetic tone without artificial smoothing.
+
