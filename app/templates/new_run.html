@@ -2,92 +2,162 @@
 {% block title %}New test run — GAUNTLET{% endblock %}
 {% block heading %}New test run{% endblock %}
 {% block actions %}
-<button class="btn btn-primary" type="submit" form="run-form" id="btn-run">Run adversarial test</button>
+<button class="btn pearl" type="submit" form="run-form" id="btn-run">
+  <svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>
+  <span class="lbl">Run adversarial test</span>
+</button>
 {% endblock %}
+
 {% block content %}
-<p class="lede">Configure a controlled experiment. Selected fault IDs are sent to the engine unchanged. If you choose sampling, the Saboteur picks from the catalog using chaos intensity. A clean run injects nothing and cannot prove resilience.</p>
+<header class="hd">
+  <h1 class="ttl">New test run</h1>
+  <p class="lead">
+    Configure a controlled chaos experiment. Choose target agent, select adversarial fault vectors, set optional deterministic seeds, and launch.
+  </p>
+</header>
 
-<div class="page-grid grid-2">
-  <form id="run-form" class="panel panel-pad form-grid" novalidate>
-    <label class="field">
-      <span>Subject name</span>
-      <input type="text" id="subject-name" name="subject_name" value="Autonomous Assistant v1" maxlength="120" autocomplete="off">
-    </label>
-
-    <fieldset class="field" style="border:0;padding:0;margin:0">
-      <legend class="field-label">Experiment mode</legend>
-      <div class="mode-pills">
-        <label class="is-on"><input type="radio" name="mode" value="selected" checked> Selected faults only</label>
-        <label><input type="radio" name="mode" value="sample"> Intensity sampling</label>
-        <label><input type="radio" name="mode" value="clean"> Clean run (no faults)</label>
-      </div>
-    </fieldset>
-
-    <label class="field">
-      <span>Chaos intensity <span class="mono" id="intensity-val">0.5</span></span>
-      <input type="range" id="intensity" min="0" max="1" step="0.1" value="0.5">
-      <span class="help">Used when sampling. Ignored for explicit selections. Zero intensity with no IDs yields a clean run.</span>
-    </label>
-
-    <label class="field">
-      <span>Deterministic seed <span class="muted">(optional replay seed)</span></span>
-      <input type="number" id="run-seed" name="seed" placeholder="e.g. 42109" min="0" step="1" autocomplete="off">
-      <span class="help">Leave blank for unseeded dynamic randomness. Supplying an integer ensures deterministic fault selection across replays.</span>
-    </label>
-
-    <div>
-      <div class="field-label" style="margin-bottom:8px">Fault families</div>
-      <div class="fault-list">
-        {% for fault in catalog %}
-        <label class="fault-card">
-          <input type="checkbox" name="fault_choice" value="{{ fault.id }}" data-name="{{ fault.name }}" data-description="{{ fault.description }}">
-          <div>
-            <h4>{{ fault.name }}</h4>
-            <p>{{ fault.description }}</p>
-            <p class="mono muted">{{ fault.id }} · {{ fault.fault_type.value }} · {{ fault.target_endpoint }}</p>
-          </div>
-          <span class="badge badge-neutral">{{ fault.severity }}</span>
+<div class="cols ov">
+  <div>
+    <form id="run-form" class="gpanel" style="margin-top:0" novalidate>
+      <!-- Stage 01: Choose agent -->
+      <section class="form-stage" style="padding-top:10px">
+        <span class="stage-num">01 / Subject</span>
+        <h3 class="stage-title">Choose agent under test</h3>
+        <label class="field">
+          <span>Subject agent name</span>
+          <input type="text" id="subject-name" name="subject_name" value="Autonomous Assistant v1" maxlength="120" autocomplete="off" placeholder="e.g. Autonomous Assistant v1">
+          <span class="help">Target agent harness invoked during the stress test execution.</span>
         </label>
-        {% endfor %}
+      </section>
+
+      <!-- Stage 02: Experiment Mode & Faults -->
+      <section class="form-stage">
+        <span class="stage-num">02 / Chaos vectors</span>
+        <h3 class="stage-title">Configure adversarial faults</h3>
+
+        <fieldset class="field" style="border:0;padding:0;margin:0 0 18px">
+          <legend class="field-label" style="margin-bottom:8px">Experiment mode</legend>
+          <div class="mode-pills" role="radiogroup">
+            <label class="is-on">
+              <input type="radio" name="mode" value="selected" checked>
+              <span>Selected faults</span>
+            </label>
+            <label>
+              <input type="radio" name="mode" value="sample">
+              <span>Intensity sampling</span>
+            </label>
+            <label>
+              <input type="radio" name="mode" value="clean">
+              <span>Clean baseline run</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div id="faults-picker">
+          <div class="field-label" style="margin-bottom:10px">Select fault families from catalog</div>
+          <div class="fault-list">
+            {% for fault in catalog %}
+            <label class="fault-card" id="card-{{ fault.id }}">
+              <input type="checkbox" name="fault_choice" value="{{ fault.id }}" data-name="{{ fault.name }}" data-description="{{ fault.description }}" style="margin-top:4px">
+              <div>
+                <h4>{{ fault.name }}</h4>
+                <p>{{ fault.description }}</p>
+                <p class="fault-meta">{{ fault.id }} · {{ fault.fault_type.value }} · {{ fault.target_endpoint }}</p>
+              </div>
+              <span class="chip {% if fault.severity == 'CRITICAL' %}fault{% else %}warn{% endif %}">{{ fault.severity }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <!-- Stage 03: Seed & Options -->
+      <section class="form-stage">
+        <span class="stage-num">03 / Reproducibility &amp; Options</span>
+        <h3 class="stage-title">Seed and options</h3>
+
+        <label class="field" id="intensity-field">
+          <span>Chaos intensity <span class="mono tabular" id="intensity-val">0.5</span></span>
+          <input type="range" id="intensity" min="0" max="1" step="0.1" value="0.5">
+          <span class="help">Used during intensity sampling mode. Determines probability of scenario injection.</span>
+        </label>
+
+        <label class="field">
+          <span>Deterministic seed <span class="muted">(optional replay seed)</span></span>
+          <input type="number" id="run-seed" name="seed" placeholder="e.g. 42109" min="0" step="1" autocomplete="off">
+          <span class="help">Leave blank for unseeded dynamic randomness. Supplying an integer ensures deterministic fault selection across replays.</span>
+        </label>
+
+        <label class="field" style="display:grid;grid-template-columns:20px 1fr;gap:12px;align-items:start;margin-top:16px">
+          <input type="checkbox" id="auto-harden" checked style="margin-top:4px">
+          <div>
+            <span style="font-weight:500;color:var(--tx)">Generate advisory hardening recommendations</span>
+            <div class="help" style="margin:2px 0 0">
+              Evaluates failure patterns and suggests targeted mitigations. Recommendations are advisory only and never applied to disk.
+            </div>
+          </div>
+        </label>
+
+        <p class="notice notice-crit" id="form-error" hidden></p>
+      </section>
+
+      <!-- Stage 04: Review & Run -->
+      <section class="form-stage" style="border-bottom:0;padding-bottom:10px">
+        <span class="stage-num">04 / Launch</span>
+        <h3 class="stage-title">Review and run</h3>
+        <p class="sub" style="margin-bottom:16px">
+          Clicking <strong>Run adversarial test</strong> launches a synchronous referee execution against the subject agent harness.
+        </p>
+        <button class="btn pearl" type="submit" id="btn-run-bottom" style="min-height:44px;padding:0 24px">
+          <svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>
+          <span>Run adversarial test</span>
+        </button>
+      </section>
+    </form>
+  </div>
+
+  <!-- Supporting planned experiment sidebar -->
+  <aside class="side-sec">
+    <div class="gpanel" style="margin-top:0;padding:24px 22px 20px">
+      <h3>Planned experiment</h3>
+      <div class="summary-list" id="plan-summary" style="margin-top:14px"></div>
+
+      <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--line)">
+        <span style="font-size:13px;color:var(--tx-3);display:block;margin-bottom:6px">Catalog scenarios:</span>
+        <p class="help" style="margin:0;line-height:1.5">
+          Available families: HTTP 429 (<span class="mono">FAULT-RATE-LIMIT-429</span>), HTTP 500 (<span class="mono">FAULT-HTTP-500</span>), latency (<span class="mono">FAULT-LATENCY-99</span>), malformed JSON (<span class="mono">FAULT-MALFORMED-PAYLOAD</span>), schema drift (<span class="mono">FAULT-SCHEMA-DRIFT</span>), indirect prompt injection (<span class="mono">FAULT-INDIRECT-INJECTION</span>).
+        </p>
       </div>
     </div>
-
-    <label class="field" style="grid-template-columns:18px 1fr;align-items:start">
-      <input type="checkbox" id="auto-harden" checked>
-      <span>Generate advisory hardening recommendations. Patches are suggestions only and are never applied automatically.</span>
-    </label>
-
-    <p class="notice notice-crit" id="form-error" hidden></p>
-  </form>
-
-  <aside class="panel panel-pad">
-    <div class="panel-h"><h2>Planned experiment</h2></div>
-    <div class="summary-list" id="plan-summary"></div>
-    <p class="help" style="margin-top:16px">Mandatory families in this catalog: HTTP 429 (<span class="mono">FAULT-RATE-LIMIT-429</span>), HTTP 500 (<span class="mono">FAULT-HTTP-500</span>), latency (<span class="mono">FAULT-LATENCY-99</span>), malformed JSON (<span class="mono">FAULT-MALFORMED-PAYLOAD</span>), schema drift (<span class="mono">FAULT-SCHEMA-DRIFT</span>), indirect prompt injection (<span class="mono">FAULT-INDIRECT-INJECTION</span>).</p>
   </aside>
 </div>
 
+<!-- Progress loading overlay -->
 <div class="overlay" id="progress-overlay" aria-hidden="true">
   <div class="dialog" role="status" aria-live="polite">
-    <div class="progress-note">
-      <span class="spinner" aria-hidden="true"></span>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="spinner" style="width:24px;height:24px;border-width:3px" aria-hidden="true"></span>
       <div>
-        <h2>Running adversarial test…</h2>
-        <p class="muted">Waiting on the synchronous backend. This is not a simulated progress meter.</p>
+        <h3 style="margin:0 0 4px;font-size:18px">Running adversarial test…</h3>
+        <p style="margin:0;font-size:13.5px;color:var(--tx-2)">
+          Executing synchronous referee evaluation. Scenarios with latency bursts can take several seconds.
+        </p>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Review dialog modal -->
 <dialog class="dialog" id="confirm-dialog">
-  <h2>Review configuration</h2>
-  <div id="confirm-body"></div>
-  <div class="topbar-actions" style="margin-top:16px;justify-content:flex-end">
-    <button class="btn btn-secondary" type="button" onclick="document.getElementById('confirm-dialog').close()">Cancel</button>
-    <button class="btn btn-primary" type="button" id="confirm-go">Start run</button>
+  <h3 style="margin:0 0 8px;font-size:20px">Confirm experiment configuration</h3>
+  <div id="confirm-body" style="font-size:14px;margin-bottom:18px"></div>
+  <div style="display:flex;justify-content:flex-end;gap:10px">
+    <button class="btn glass" type="button" onclick="document.getElementById('confirm-dialog').close()">Cancel</button>
+    <button class="btn pearl" type="button" id="confirm-go">Start run</button>
   </div>
 </dialog>
 {% endblock %}
+
 {% block scripts %}
 <script type="module" src="/static/js/new-run.js"></script>
 {% endblock %}
