@@ -1,662 +1,386 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="GAUNTLET is an AI-agent crash-test lab for controlled fault injection, score-based recovery, and tamper-evident SHA-256 evidence seals.">
-    <meta name="theme-color" content="#fafaf9">
+    <meta name="theme-color" content="#0A0F17">
     <title>GAUNTLET — AI-agent crash-test lab</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+
+    <!-- Preload only the responsive backdrop variant used -->
+    {% if hero_bg_1920_exists %}
+    <link rel="preload" href="/static/landing/img/hero-bg-1920.webp" as="image" type="image/webp" media="(min-width: 1281px)">
+    {% endif %}
+    {% if hero_bg_1280_exists %}
+    <link rel="preload" href="/static/landing/img/hero-bg-1280.webp" as="image" type="image/webp" media="(min-width: 769px) and (max-width: 1280px)">
+    {% endif %}
+    {% if hero_bg_mobile_exists %}
+    <link rel="preload" href="/static/landing/img/hero-bg-mobile.webp" as="image" type="image/webp" media="(max-width: 768px)">
+    {% endif %}
+
+    <!-- Inlined dark CSS fallback so first paint is never blank -->
+    <style>
+      html, body { background-color: #0A0F17; color: #EAEEF4; }
+      .lp-art { background-color: #0E1520; background-image: radial-gradient(circle at 72% 42%, #1C293A 0%, #0E1520 100%); }
+    </style>
+
+    <noscript>
+      <style>
+        :root { --veil: 0.35 !important; }
+        .lp-trail { display: none !important; }
+        .lp-rise { opacity: 1 !important; transform: none !important; }
+      </style>
+    </noscript>
+
     <link rel="stylesheet" href="/static/landing/landing.css">
   </head>
   <body class="lp-body">
     <a class="lp-skip-link" href="#main">Skip to content</a>
 
-    <!-- Navigation Bar -->
-    <header class="lp-header" id="lp-header">
-      <div class="lp-container lp-header-inner">
-        <a class="lp-brand-group" href="/landing" aria-label="GAUNTLET home">
-          <span class="lp-logo-mark" aria-hidden="true">
-            <!-- Signature Fault/Recovery Mark: horizontal line cut by gap then continues -->
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <line x1="2" y1="12" x2="8" y2="12" stroke="#14161A" />
-              <circle cx="12" cy="12" r="2" fill="#D9480F" stroke="#D9480F" />
-              <line x1="16" y1="12" x2="22" y2="12" stroke="#1F7A4D" />
-            </svg>
-          </span>
-          <span class="lp-wordmark">GAUNTLET</span>
+    <!-- FIXED ART STACK (NEVER SCROLLED OR TRANSLATED) -->
+    <div class="lp-fx lp-art {% if hero_bg_1920_exists %}lp-art-1920{% endif %} {% if hero_bg_1280_exists %}lp-art-1280{% endif %} {% if hero_bg_mobile_exists %}lp-art-mobile{% endif %}" aria-hidden="true"></div>
+    <div class="lp-fx lp-scrim" aria-hidden="true"></div>
+    <div class="lp-fx lp-warm" aria-hidden="true"></div>
+    <div class="lp-fx lp-veil" aria-hidden="true"></div>
+    <div class="lp-fx lp-grain" aria-hidden="true"></div>
+
+    <!-- NAVIGATION BAR -->
+    <header class="lp-nav-bar" id="lp-nav-bar">
+      <div class="lp-nav-inner">
+        <a class="lp-brand" href="#top" aria-label="GAUNTLET home">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+            <path d="M2 11h7M13 11h7" stroke="#EAEEF4" stroke-width="2.2" stroke-linecap="round"/>
+            <path d="M11 5v12" stroke="#FF7A3D" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+          GAUNTLET
         </a>
 
-        <nav class="lp-nav" aria-label="Main navigation">
-          <a class="lp-nav-link" href="#demo">Demo</a>
-          <a class="lp-nav-link" href="#faults">Faults</a>
-          <a class="lp-nav-link" href="#pipeline">Pipeline</a>
-          <a class="lp-nav-link" href="#evidence">Evidence</a>
-          <a class="lp-nav-link" href="#architecture">Architecture</a>
-          <a class="lp-nav-link" href="https://github.com/Angad-Chede/Gauntlet" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <nav class="lp-nav-menu" aria-label="Primary">
+          <a href="#demo">Demo</a>
+          <a href="#faults">Faults</a>
+          <a href="#pipeline">Pipeline</a>
+          <a href="#evidence">Evidence</a>
+          <a href="#hardening">Hardening</a>
+          <a href="https://github.com/Angad-Chede/Gauntlet" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
 
         <div class="lp-nav-actions">
-          <button class="lp-btn lp-btn--primary" id="lp-run-demo-nav" type="button">Run a crash test</button>
-          <a class="lp-btn lp-btn--secondary" href="/app">Open app</a>
-          <button class="lp-menu-toggle" type="button" aria-label="Open mobile navigation" data-lp-menu-toggle>
-            <span></span><span></span><span></span>
+          <button class="lp-btn lp-btn-pearl" id="lp-run-demo-nav" type="button">Run a crash test</button>
+          <a class="lp-btn lp-btn-glass" href="/app">Open app</a>
+          <button class="lp-menu-toggle" type="button" aria-label="Open mobile navigation" id="lp-menu-toggle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
         </div>
       </div>
+
+      <div class="lp-mobile-nav" id="lp-mobile-nav">
+        <a href="#demo">Demo</a>
+        <a href="#faults">Faults</a>
+        <a href="#pipeline">Pipeline</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#hardening">Hardening</a>
+        <a href="/app">Open app</a>
+        <a href="https://github.com/Angad-Chede/Gauntlet" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
     </header>
 
+    <!-- TRAIL RAIL (>=1400PX ONLY) -->
+    <nav class="lp-trail" id="lp-trail" aria-label="Page progress">
+      <a href="#top" data-s="top" style="top:0"><span>Start</span></a>
+      <a href="#demo" data-s="demo" style="top:25%"><span>Inject</span></a>
+      <a href="#faults" data-s="faults" style="top:50%"><span>Observe</span></a>
+      <a href="#pipeline" data-s="pipeline" style="top:75%"><span>Judge</span></a>
+      <a href="#evidence" data-s="evidence" style="top:100%"><span>Seal</span></a>
+    </nav>
+
     <main id="main">
-      <!-- 00 Hero Section -->
-      <section class="lp-hero">
-        <div class="lp-hero-grid-bg" aria-hidden="true"></div>
-        <div class="lp-container lp-hero-content">
-          <div class="lp-hero-copy-grid">
-            <div class="lp-hero-copy">
-              <p class="lp-eyebrow">
-                <span class="lp-eyebrow-dot" aria-hidden="true"></span>
-                <span>AI-Agent Crash-Test Lab · Calibrated Instrument</span>
-              </p>
-              <h1 class="lp-hero-h1">Crash-test your AI agent before production does.</h1>
-              <p class="lp-hero-lead">GAUNTLET injects controlled faults into an agent run, scores how it recovers, and seals the evidence with SHA-256.</p>
+      <!-- 00. HERO (LEFT-ALIGNED OVER DARK SKY) -->
+      <section class="lp-hero" id="top">
+        <div class="lp-hero-inner">
+          <div class="lp-hero-copy">
+            <span class="lp-chip lp-rise" style="--d:0"><i class="lp-chip-dot"></i>neatHack 2026 · AI-agent crash-test lab</span>
+            <h1 class="lp-h1 lp-rise" style="--d:1">Crash-test your AI agent before production does.</h1>
+            <p class="lp-lead lp-rise" style="--d:2">GAUNTLET injects controlled faults into an agent run, scores how it recovers, and seals the evidence with SHA-256.</p>
 
-              <div class="lp-hero-actions">
-                <button class="lp-btn lp-btn--primary" id="lp-run-demo" type="button">Run a crash test</button>
-                <a class="lp-btn lp-btn--secondary" href="/runs/{{ baseline_run.run_id if baseline_run else 'run_d42996d50d' }}">Inspect a sealed run</a>
-              </div>
-
-              <div class="lp-hero-claims-row">
-                <span class="lp-claim-item">
-                  <svg class="lp-claim-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.739a.75.75 0 0 1 1.04-.208Z" clip-rule="evenodd"/>
-                  </svg>
-                  <span>No account required</span>
-                </span>
-                <span class="lp-claim-item">
-                  <svg class="lp-claim-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.739a.75.75 0 0 1 1.04-.208Z" clip-rule="evenodd"/>
-                  </svg>
-                  <span>Recorded runs persist locally</span>
-                </span>
-                <span class="lp-claim-item">
-                  <svg class="lp-claim-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.739a.75.75 0 0 1 1.04-.208Z" clip-rule="evenodd"/>
-                  </svg>
-                  <span>Hardening is advisory-only</span>
-                </span>
-              </div>
-              <p id="lp-run-status" class="lp-run-status-live" aria-live="polite"></p>
-            </div>
-          </div>
-
-          <!-- Full-Width Hero Console: Cols 1-12, Real HTTP 429 Run -->
-          <div class="lp-hero-console lp-calibrated-frame" aria-label="Hero execution console">
-            <div class="lp-frame-titlebar">
-              <div class="lp-frame-titlebar-left">
-                <span class="lp-mono">RUN · <strong id="lp-hero-run-id">{{ baseline_run.run_id if baseline_run else 'run_d42996d50d' }}</strong></span>
-                <span class="lp-badge lp-badge--tested">SEALED · SHA-256</span>
-              </div>
-              <div class="lp-frame-titlebar-right">
-                <span class="lp-mono" id="lp-hero-time-mode">OFFSET-BASED TIMELINE (MS)</span>
-              </div>
+            <div class="lp-cta-row lp-rise" style="--d:3">
+              <button class="lp-btn lp-btn-pearl" id="lp-run-demo" type="button">Run a crash test</button>
+              <a class="lp-btn lp-btn-glass" href="/runs/{{ baseline_run.run_id if baseline_run else 'run_d42996d50d' }}">Inspect a sealed run</a>
             </div>
 
-            <div class="lp-console-grid">
-              <!-- Left Waterfall View -->
-              <div class="lp-console-main">
-                <div class="lp-time-ruler-wrap">
-                  <span class="lp-ruler-legend">STEP SEQUENCE</span>
-                  <div class="lp-time-ruler" aria-hidden="true" id="lp-hero-ruler">
-                    <span class="lp-ruler-tick">0</span>
-                    <span class="lp-ruler-tick">50</span>
-                    <span class="lp-ruler-tick">100</span>
-                    <span class="lp-ruler-tick">150</span>
-                    <span class="lp-ruler-tick">200</span>
-                    <span class="lp-ruler-tick">250</span>
-                  </div>
-                </div>
+            <ul class="lp-facts-list lp-rise" style="--d:4">
+              <li>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.2 3L13 4.5" stroke="#5FD39A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Five fault families</span>
+              </li>
+              <li>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.2 3L13 4.5" stroke="#5FD39A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>SHA-256 sealed evidence</span>
+              </li>
+              <li>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.2 3L13 4.5" stroke="#5FD39A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Advisory-only hardening</span>
+              </li>
+            </ul>
 
-                <div class="lp-waterfall-track" id="lp-hero-waterfall" aria-live="polite">
-                  <!-- Rendered dynamically by Waterfall component from real run JSON -->
-                  {% if baseline_run and baseline_run.steps %}
-                    {% for step in baseline_run.steps[:6] %}
-                    <div class="lp-waterfall-row" data-step-index="{{ step.step_index }}">
-                      <span class="lp-waterfall-label-col" title="{{ step.action }}">{{ step.action.split('(')[0] }}</span>
-                      <div class="lp-waterfall-bar-track">
-                        <span class="lp-waterfall-bar {% if 'RETRY' in step.action or 'FAIL' in step.status %}lp-waterfall-bar--fault{% elif 'SUCCESS' in step.status or 'RECOVER' in step.status %}lp-waterfall-bar--pass{% else %}lp-waterfall-bar--neutral{% endif %}" style="width: 25%; left: {{ (loop.index0 * 14) }}%;"></span>
-                        <span class="lp-waterfall-bar-dur">{{ step.status }}</span>
-                      </div>
-                    </div>
-                    {% endfor %}
-                  {% endif %}
-                </div>
-              </div>
-
-              <!-- Right Score & Verdict Rail -->
-              <div class="lp-console-sidebar">
-                <div class="lp-console-score-box">
-                  <p class="lp-console-kicker">Resilience score</p>
-                  <div class="lp-score-row">
-                    <span class="lp-num-lg" id="lp-hero-score-val">{{ baseline_run.score.overall_resilience_score if baseline_run and baseline_run.score else '—' }}</span>
-                    <span class="lp-score-denom">/ 100</span>
-                  </div>
-                  <div class="lp-submeters">
-                    <div class="lp-meter-row">
-                      <span>Fault tolerance</span>
-                      <span id="lp-hero-sub-ft">{{ baseline_run.score.fault_tolerance_score if baseline_run and baseline_run.score else '—' }}%</span>
-                      <div class="lp-meter-track"><div class="lp-meter-fill" style="width: {{ baseline_run.score.fault_tolerance_score if baseline_run and baseline_run.score else 80 }}%;"></div></div>
-                    </div>
-                    <div class="lp-meter-row">
-                      <span>Safety preservation</span>
-                      <span id="lp-hero-sub-sp">{{ baseline_run.score.safety_preservation_score if baseline_run and baseline_run.score else '—' }}%</span>
-                      <div class="lp-meter-track"><div class="lp-meter-fill" style="width: {{ baseline_run.score.safety_preservation_score if baseline_run and baseline_run.score else 100 }}%;"></div></div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="lp-console-verdict-box">
-                  <p class="lp-console-kicker">Referee verdict</p>
-                  <div>
-                    <span class="lp-badge lp-badge--fault" id="lp-hero-verdict-badge">{{ baseline_run.verdict.verdict if baseline_run and baseline_run.verdict else 'RESILIENT_DEGRADED' }}</span>
-                  </div>
-                </div>
-
-                <div class="lp-seal-chip-box">
-                  <p class="lp-console-kicker">Canonical seal</p>
-                  <div class="lp-seal-chip">
-                    <span id="lp-hero-seal-chip">{{ (evidence.sha256_audit_seal[:8] ~ '...' ~ evidence.sha256_audit_seal[-8:]) if evidence and evidence.sha256_audit_seal else '7787593a...9491b8' }}</span>
-                    <button class="lp-copy-btn" type="button" data-copy-target="lp-hero-seal-full" aria-label="Copy SHA-256 seal">
-                      <span class="lp-copy-text">Copy</span>
-                    </button>
-                    <input type="hidden" id="lp-hero-seal-full" value="{{ evidence.sha256_audit_seal if evidence and evidence.sha256_audit_seal else '' }}">
-                  </div>
-                  <a class="lp-console-link" href="/runs/{{ baseline_run.run_id if baseline_run else 'run_d42996d50d' }}">
-                    <span>Open full inspector</span>
-                    <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-              </div>
-            </div>
+            <p id="lp-run-status" class="lp-run-status-live" aria-live="polite" style="margin: 16px 0 0; font-size: 14px; color: var(--tx-2);"></p>
           </div>
         </div>
       </section>
 
-      <!-- 01 Product Preview Section ("Inside the product") -->
-      <section class="lp-section lp-section--paper-2" id="preview">
-        <div class="lp-container">
-          <div class="lp-section-head-grid">
-            <div class="lp-section-index-rail">
-              <span class="lp-section-index">01</span>
-              <span class="lp-mono">PREVIEW</span>
-            </div>
-            <div class="lp-section-title-rail">
-              <h2 class="lp-section-h2">Inside the product.</h2>
-              <p class="lp-section-lead">A calibrated testbench built for reliability engineers. Real screenshots captured directly from the running GAUNTLET web application.</p>
-            </div>
+      <!-- PAGE WRAPPER: GLIDING GLASS PANELS WITH 28PX GAPS -->
+      <div class="lp-wrap">
+
+        <!-- HERO OVERLAP CONSOLE: REAL RUN WATERFALL (run_d42996d50d) -->
+        <div class="lp-glass-solid lp-pad lp-console-hero lp-play" id="heroConsole" aria-label="Hero execution console">
+          <div class="lp-wf-head">
+            <span>RUN · <strong id="lp-hero-run-id">{{ baseline_run.run_id if baseline_run else 'run_d42996d50d' }}</strong></span>
+            <span>
+              <span class="lp-badge lp-badge--fault" id="lp-hero-verdict-badge">{{ (baseline_run.verdict.verdict|string).replace('VerdictStatus.', '') if baseline_run and baseline_run.verdict else 'RESILIENT_DEGRADED' }}</span>
+              <span class="lp-badge lp-badge--tested">SEALED</span>
+            </span>
+          </div>
+          <div class="lp-ruler">
+            <i style="left:0%"></i><span style="left:0%">0</span>
+            <i style="left:25%"></i><span style="left:25%">25</span>
+            <i style="left:50%"></i><span style="left:50%">50</span>
+            <i style="left:75%"></i><span style="left:75%">75</span>
+            <i style="left:100%"></i><span style="left:100%">100</span>
+          </div>
+          <div class="lp-rows" id="lp-hero-rows">
+            {% if baseline_run and baseline_run.steps %}
+              {% for step in baseline_run.steps[:7] %}
+              <div class="lp-row">
+                <div class="lp-label" title="{{ step.action }}">{{ step.action.split('(')[0] }}</div>
+                <div class="lp-track">
+                  <div class="lp-bar {% if 'RETRY' in step.action or 'FAIL' in step.status or '429' in step.action %}fault{% elif 'SUCCESS' in step.status or 'OK' in step.status %}ok{% endif %}" style="--i:{{ loop.index0 }}; left:{{ loop.index0 * 13 }}%; width:16%;"></div>
+                </div>
+              </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+          <div class="lp-wf-foot">
+            <span>Resilience score: <strong id="lp-hero-score-val">{{ baseline_run.score.overall_resilience_score if baseline_run and baseline_run.score else '90.8' }}</strong> / 100</span>
+            <span>Recorded runs in local history: <strong>{{ all_runs|length if all_runs else '134' }}</strong></span>
+            <span>Canonical SHA-256 seal: <strong id="lp-hero-seal-text">{{ (evidence.sha256_audit_seal[:8] ~ '...' ~ evidence.sha256_audit_seal[-8:]) if evidence and evidence.sha256_audit_seal else '—' }}</strong></span>
+          </div>
+        </div>
+
+        <!-- 01. FAULT BENCH (INTERACTIVE DEMO) -->
+        <div class="lp-sec-h" id="demo">
+          <h2>Break it. Watch what it does next.</h2>
+          <p>Pick a fault family. The painting stays fixed; the page glides over it and the light shifts as you move toward the sealed record.</p>
+        </div>
+
+        <div class="lp-glass lp-pad">
+          <p class="lp-bench-reconciliation-note" style="margin: 0 0 14px; font-size: 14px; color: var(--tx-3);">
+            7 catalog fault scenarios across 5 adversarial families (4 families verified with recorded runs, 1 planned).
+          </p>
+
+          <div class="lp-seg" role="tablist" aria-label="Fault family" id="lp-fault-select">
+            <button role="tab" aria-selected="true" data-fault-key="rate_limit_429">
+              HTTP 429
+              <span class="lp-badge lp-badge--implemented" style="height: 18px; padding: 0 6px; font-size: 10px;">IMPLEMENTED</span>
+            </button>
+            <button role="tab" aria-selected="false" data-fault-key="schema_drift">
+              Schema drift
+              <span class="lp-badge lp-badge--implemented" style="height: 18px; padding: 0 6px; font-size: 10px;">IMPLEMENTED</span>
+            </button>
+            <button role="tab" aria-selected="false" data-fault-key="indirect_injection">
+              Indirect injection
+              <span class="lp-badge lp-badge--implemented" style="height: 18px; padding: 0 6px; font-size: 10px;">IMPLEMENTED</span>
+            </button>
+            <button role="tab" aria-selected="false" data-fault-key="http_500">
+              Repeated error
+              <span class="lp-badge lp-badge--implemented" style="height: 18px; padding: 0 6px; font-size: 10px;">IMPLEMENTED</span>
+            </button>
+            <button role="tab" aria-selected="false" data-fault-key="malformed_output" disabled>
+              Malformed output
+              <span class="lp-badge lp-badge--planned" style="height: 18px; padding: 0 6px; font-size: 10px;">PLANNED</span>
+            </button>
           </div>
 
-          <div class="lp-preview-wrapper lp-calibrated-frame">
-            <div class="lp-preview-nav-tabs" role="tablist" aria-label="Product preview tabs">
-              <button class="lp-preview-tab is-active" type="button" role="tab" aria-selected="true" data-preview-target="preview-overview">Overview</button>
-              <button class="lp-preview-tab" type="button" role="tab" aria-selected="false" data-preview-target="preview-inspector">Run inspector</button>
-              <button class="lp-preview-tab" type="button" role="tab" aria-selected="false" data-preview-target="preview-hardening">Hardening</button>
-            </div>
-
-            <div class="lp-preview-stage">
-              <!-- Floating Annotation Pills inspired by Stripe Connect reference -->
-              <div class="lp-annotation-pill lp-annotation-pill-1" aria-hidden="true">
-                <span class="lp-eyebrow-dot"></span>
-                <span>sha256_audit_seal.verify()</span>
+          <div class="lp-glass-solid lp-pad">
+            <div id="lp-bench-wf">
+              <div class="lp-wf-head">
+                <span id="lp-bench-titlebar-run">RUN · run_d42996d50d</span>
+                <span>
+                  <span class="lp-badge lp-badge--fault" id="lp-bench-verdict">RESILIENT_DEGRADED</span>
+                  <span class="lp-badge lp-badge--tested" id="lp-bench-badge">SEALED</span>
+                </span>
               </div>
-              <div class="lp-annotation-pill lp-annotation-pill-2" aria-hidden="true">
-                <span>advisory_patch_diff.inspect()</span>
+              <div class="lp-ruler" id="lp-bench-ruler">
+                <i style="left:0%"></i><span style="left:0%">0</span>
+                <i style="left:25%"></i><span style="left:25%">25</span>
+                <i style="left:50%"></i><span style="left:50%">50</span>
+                <i style="left:75%"></i><span style="left:75%">75</span>
+                <i style="left:100%"></i><span style="left:100%">100</span>
               </div>
-
-              <!-- Tab View 1: Overview -->
-              <div class="lp-preview-pane is-active" id="preview-overview">
-                <div class="lp-preview-img-container">
-                  <img class="lp-preview-img" src="/static/landing/img/preview_overview.webp" width="1784" height="1916" alt="Screenshot of the running app: GAUNTLET Dashboard overview showing resilience metrics, catalog scenarios, and historical runs">
-                </div>
-                <div class="lp-preview-caption-bar">
-                  <span>Dashboard Overview · Active Telemetry & Catalog View</span>
-                  <span>Screenshot of the running app</span>
-                </div>
+              <div class="lp-rows" id="lp-bench-rows">
+                <!-- Dynamically populated from real run JSON -->
               </div>
-
-              <!-- Tab View 2: Inspector -->
-              <div class="lp-preview-pane" id="preview-inspector" style="display: none;">
-                <div class="lp-preview-img-container">
-                  <img class="lp-preview-img" src="/static/landing/img/preview_inspector.webp" width="1784" height="1479" alt="Screenshot of the running app: GAUNTLET Run Inspector with step latency breakdown and referee verdict">
-                </div>
-                <div class="lp-preview-caption-bar">
-                  <span>Run Inspector · Step Telemetry & Referee Verdict</span>
-                  <span>Screenshot of the running app</span>
-                </div>
-              </div>
-
-              <!-- Tab View 3: Hardening -->
-              <div class="lp-preview-pane" id="preview-hardening" style="display: none;">
-                <div class="lp-preview-img-container">
-                  <img class="lp-preview-img" src="/static/landing/img/preview_hardening.webp" width="1784" height="1165" alt="Screenshot of the running app: GAUNTLET Hardening Advisory diff patch generation">
-                </div>
-                <div class="lp-preview-caption-bar">
-                  <span>Hardening Advisory · Unified Diff Patch Proposal</span>
-                  <span>Screenshot of the running app</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Proof Columns Below Preview -->
-            <div class="lp-preview-stat-row">
-              <div class="lp-preview-stat-item">
-                <span class="lp-preview-stat-label">Recorded runs</span>
-                <strong class="lp-preview-stat-val" id="lp-run-count">{{ all_runs|length if all_runs else '100' }}</strong>
-              </div>
-              <div class="lp-preview-stat-item">
-                <span class="lp-preview-stat-label">Catalog entries</span>
-                <strong class="lp-preview-stat-val" id="lp-fault-count">{{ catalog|length if catalog else '7' }}</strong>
-              </div>
-              <div class="lp-preview-stat-item">
-                <span class="lp-preview-stat-label">Evidence seal status</span>
-                <strong class="lp-preview-stat-val" id="lp-proof-status">Verified</strong>
+              <div class="lp-wf-foot" id="lp-bench-foot">
+                <!-- Populated dynamically with agent recovery actions -->
               </div>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- 02 Fault Bench (Interactive Demo) -->
-      <section class="lp-section lp-section--paper" id="demo">
-        <div class="lp-container">
-          <div class="lp-section-head-grid">
-            <div class="lp-section-index-rail">
-              <span class="lp-section-index">02</span>
-              <span class="lp-mono">FAULT BENCH</span>
+        <!-- 02. FIVE FAULT FAMILIES (BENTO 3+3 / 2+2+2 GRID) -->
+        <div class="lp-sec-h" id="faults">
+          <h2>Five ways production breaks agents.</h2>
+          <p>Autonomous LLM workflows rarely fail cleanly. We subject agents to 7 catalog scenarios across five fundamental fault patterns.</p>
+        </div>
+
+        <div class="lp-bento">
+          <div class="lp-glass lp-card lp-c3">
+            <div class="lp-card-head">
+              <h3>Rate limiting</h3>
+              <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
             </div>
-            <div class="lp-section-title-rail">
-              <h2 class="lp-section-h2">Break it. Watch what it does next.</h2>
-              <p class="lp-section-lead">Step-by-step adversarial execution. Switch scenarios to evaluate how the agent reacts to rate limits, schema corruptions, and injection attacks.</p>
-            </div>
+            <p>The tool answers HTTP 429 and asks the agent to wait before retry.</p>
+            <code>HTTP 429 · Retry-After: 20s</code>
           </div>
 
-          <p class="lp-bench-reconciliation-note">7 catalog fault scenarios across 5 adversarial families (4 families verified with recorded runs, 1 planned).</p>
+          <div class="lp-glass lp-card lp-c3">
+            <div class="lp-card-head">
+              <h3>Schema drift</h3>
+              <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
+            </div>
+            <p>An upstream response changes structure between tool calls, dropping expected keys.</p>
+            <code>contract mismatch · v2_mutation</code>
+          </div>
 
-          <div class="lp-bench-tabs" id="lp-fault-select" role="tablist" aria-label="Fault scenario selector">
-            <button class="lp-bench-tab is-active" type="button" role="tab" aria-selected="true" data-fault-key="rate_limit_429">
-              <span>HTTP 429 Rate Limit</span>
-              <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-            </button>
-            <button class="lp-bench-tab" type="button" role="tab" aria-selected="false" data-fault-key="schema_drift">
-              <span>Schema Drift</span>
-              <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-            </button>
-            <button class="lp-bench-tab" type="button" role="tab" aria-selected="false" data-fault-key="indirect_injection">
-              <span>Indirect Injection</span>
-              <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-            </button>
-            <button class="lp-bench-tab" type="button" role="tab" aria-selected="false" data-fault-key="http_500">
-              <span>HTTP 500 Loop</span>
-              <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-            </button>
-            <button class="lp-bench-tab" type="button" role="tab" aria-selected="false" data-fault-key="malformed_output" disabled>
-              <span>Malformed Output</span>
+          <div class="lp-glass lp-card lp-c2">
+            <div class="lp-card-head">
+              <h3>Malformed output</h3>
               <span class="lp-badge lp-badge--planned">PLANNED</span>
-            </button>
+            </div>
+            <p>A tool returns unclosed JSON strings or corrupt payloads into the agent buffer.</p>
+            <code>corrupted database payload · unparsable</code>
           </div>
 
-          <!-- Selected Scenario Console -->
-          <div class="lp-calibrated-frame" id="lp-fault-panel">
-            <div class="lp-frame-titlebar">
-              <div class="lp-frame-titlebar-left">
-                <span class="lp-mono" id="lp-bench-titlebar-run">RUN · run_d42996d50d</span>
-                <span class="lp-badge lp-badge--tested" id="lp-bench-titlebar-badge">SEALED</span>
-              </div>
-              <div class="lp-frame-titlebar-right">
-                <span class="lp-mono" id="lp-bench-timing-axis">SEQUENCE (DURATIONS TO SCALE)</span>
-              </div>
+          <div class="lp-glass lp-card lp-c2">
+            <div class="lp-card-head">
+              <h3>Indirect prompt injection</h3>
+              <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
             </div>
+            <p>Untrusted tool text embeds instructions attempting to override authorization policies.</p>
+            <code>policy override attempt · trusted tool</code>
+          </div>
 
-            <div class="lp-console-grid">
-              <div class="lp-console-main">
-                <div class="lp-time-ruler-wrap">
-                  <span class="lp-ruler-legend">EXECUTION TELEMETRY</span>
-                  <div class="lp-time-ruler" aria-hidden="true">
-                    <span class="lp-ruler-tick">START</span>
-                    <span class="lp-ruler-tick">INJECTION</span>
-                    <span class="lp-ruler-tick">RECOVERY</span>
-                    <span class="lp-ruler-tick">SEAL</span>
-                  </div>
-                </div>
-
-                <div class="lp-waterfall-track" id="lp-fault-waterfall" aria-live="polite">
-                  <!-- Hydrated dynamically from selected real run JSON -->
-                </div>
-              </div>
-
-              <div class="lp-console-sidebar">
-                <div class="lp-console-score-box">
-                  <p class="lp-console-kicker">Resilience score</p>
-                  <div class="lp-score-row">
-                    <span class="lp-num-lg" id="lp-fault-score-val">90.8</span>
-                    <span class="lp-score-denom">/ 100</span>
-                  </div>
-                  <div class="lp-submeters" id="lp-fault-submeters">
-                    <div class="lp-meter-row">
-                      <span>Overall status</span>
-                      <span id="lp-fault-status-text">Recorded</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="lp-console-verdict-box">
-                  <p class="lp-console-kicker">Referee verdict</p>
-                  <div id="lp-fault-verdict">
-                    <span class="lp-badge lp-badge--fault">RESILIENT_DEGRADED</span>
-                  </div>
-                </div>
-
-                <div class="lp-seal-chip-box">
-                  <p class="lp-console-kicker">Cryptographic seal</p>
-                  <div class="lp-seal-chip" id="lp-fault-hash-chip">
-                    <span id="lp-fault-hash-text">Loading seal...</span>
-                    <button class="lp-copy-btn" type="button" data-copy-target="lp-fault-hash-full">
-                      <span class="lp-copy-text">Copy</span>
-                    </button>
-                    <input type="hidden" id="lp-fault-hash-full" value="">
-                  </div>
-                  <a class="lp-console-link" id="lp-fault-inspector-link" href="/runs/run_d42996d50d">
-                    <span>Open full inspector</span>
-                    <span aria-hidden="true">→</span>
-                  </a>
-                </div>
-              </div>
+          <div class="lp-glass lp-card lp-c2">
+            <div class="lp-card-head">
+              <h3>Repeated-error loop</h3>
+              <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
             </div>
+            <p>The upstream crashes repeatedly with HTTP 500, demanding bounded circuit breakers.</p>
+            <code>HTTP 500 × n · recurring fault</code>
+          </div>
+        </div>
 
-            <!-- "What the agent did next" -->
-            <div class="lp-agent-steps-box">
-              <p class="lp-agent-steps-title">What the agent did next (Derived from verified event telemetry)</p>
-              <ol class="lp-agent-steps-list" id="lp-agent-did-next">
-                <li>Observed HTTP 429 response on settle_transfer tool invocation.</li>
-                <li>Parsed Retry-After directive and applied backed-off retry sleep.</li>
-                <li>Safely aborted transaction on threshold exceedance without database state corruption.</li>
-              </ol>
+        <!-- 03. PIPELINE (QUIET NODE RAIL IN ONE GLASS PANEL) -->
+        <div class="lp-sec-h" id="pipeline">
+          <h2>Inject, observe, judge, seal.</h2>
+          <p>A continuous verification pipeline where every phase consumes verified inputs and emits deterministic outputs.</p>
+        </div>
+
+        <div class="lp-glass lp-pad">
+          <div class="lp-pipe">
+            <div class="lp-st">
+              <span class="lp-node-idx">01 · STAGE</span>
+              <h4>Subject</h4>
+              <p>Executes multi-step agent tasks under sandbox supervision.</p>
+            </div>
+            <div class="lp-st lp-hot">
+              <span class="lp-node-idx">02 · CHAOS</span>
+              <h4>Saboteur</h4>
+              <p>Chooses the fault and configures chaos intensity parameters.</p>
+            </div>
+            <div class="lp-st lp-hot">
+              <span class="lp-node-idx">03 · PROXY</span>
+              <h4>FaultProxy</h4>
+              <p>Injects rate limits, drift, or corruption directly on the wire.</p>
+            </div>
+            <div class="lp-st">
+              <span class="lp-node-idx">04 · ARBITER</span>
+              <h4>Referee</h4>
+              <p>Judges recovery compliance and state preservation.</p>
+            </div>
+            <div class="lp-st">
+              <span class="lp-node-idx">05 · METRICS</span>
+              <h4>Scorer</h4>
+              <p>Computes resilience, tolerance, and safety preservation scores.</p>
+            </div>
+            <div class="lp-st lp-seal">
+              <span class="lp-node-idx">06 · INTEGRITY</span>
+              <h4>Audit</h4>
+              <p>Seals the complete run record with canonical SHA-256.</p>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- 03 Five Fault Families (Rows with hairlines, no boxed cards) -->
-      <section class="lp-section lp-section--paper-2" id="faults">
-        <div class="lp-container">
-          <div class="lp-section-head-grid">
-            <div class="lp-section-index-rail">
-              <span class="lp-section-index">03</span>
-              <span class="lp-mono">FAULT FAMILIES</span>
+        <!-- 04. EVIDENCE (VERIFY CONSOLE + CLAIMS LEDGER) -->
+        <div class="lp-sec-h" id="evidence">
+          <h2>Evidence you can check, not take on faith.</h2>
+          <p>Every execution artifact is hashed deterministically. Recompute the cryptographic digest on demand to verify integrity.</p>
+        </div>
+
+        <div class="lp-two">
+          <div class="lp-glass-solid lp-pad">
+            <div class="lp-card-head">
+              <span class="lp-badge lp-badge--tested">SEALED · SHA-256</span>
+              <a class="lp-btn lp-btn-glass" href="/api/runs/run_d42996d50d/evidence" target="_blank" style="height: 32px; padding: 0 12px; font-size: 13px;">Download JSON ↗</a>
             </div>
-            <div class="lp-section-title-rail">
-              <h2 class="lp-section-h2">Five ways production breaks agents.</h2>
-              <p class="lp-section-lead">Autonomous LLM workflows rarely fail cleanly. We subject agents to 7 catalog scenarios across five fundamental fault patterns.</p>
+
+            <div class="lp-hash" id="lp-evidence-full-hash">
+              {{ evidence.sha256_audit_seal if evidence and evidence.sha256_audit_seal else '—' }}
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <button class="lp-btn lp-btn-pearl" id="lp-verify-seal" type="button">Verify seal</button>
+              <button class="lp-btn lp-btn-glass" type="button" data-copy-target="lp-evidence-full-hash">
+                <span class="lp-copy-text">Copy hash</span>
+              </button>
+            </div>
+
+            <div class="lp-verify-status" id="lp-verify-state">
+              Ready to verify. Click above to recompute the canonical SHA-256 seal from the on-disk evidence packet.
             </div>
           </div>
 
-          <div class="lp-fault-table">
-            <!-- Row 1: HTTP 429 -->
-            <details class="lp-fault-row" open>
-              <summary class="lp-fault-summary">
-                <div>
-                  <h3 class="lp-fault-name-h3">Rate limit</h3>
-                  <div class="lp-fault-condition">HTTP 429 · RETRY_AFTER: 20S</div>
-                </div>
-                <div>
-                  <p class="lp-fault-desc">Third-party payment gateway throttles write operations under burst volume.</p>
-                </div>
-                <div class="lp-fault-actions">
-                  <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-                  <a class="lp-console-link" href="/runs/run_d42996d50d">See run →</a>
-                </div>
-              </summary>
-              <div class="lp-fault-details-body">
-                <strong>Observed safe behavior:</strong> Agent parsed Retry-After header, queued exponential backoff retry, and cleanly aborted execution without debiting the customer balance twice.
-              </div>
-            </details>
+          <div class="lp-glass lp-pad lp-list">
+            <h4>What a seal shows</h4>
+            <ul>
+              <li>The stored execution record has not been altered or modified since execution.</li>
+              <li>The referee verdict and score were computed from these exact raw steps.</li>
+              <li>The evidence packet can be independently verified with standard SHA-256 tools.</li>
+            </ul>
 
-            <!-- Row 2: Schema drift -->
-            <details class="lp-fault-row">
-              <summary class="lp-fault-summary">
-                <div>
-                  <h3 class="lp-fault-name-h3">Schema drift</h3>
-                  <div class="lp-fault-condition">CONTRACT_DRIFT · V2_MUTATION</div>
-                </div>
-                <div>
-                  <p class="lp-fault-desc">Upstream microservice silently alters response payload keys, breaking intake schemas.</p>
-                </div>
-                <div class="lp-fault-actions">
-                  <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-                  <a class="lp-console-link" href="/runs/run_48b076965b">See run →</a>
-                </div>
-              </summary>
-              <div class="lp-fault-details-body">
-                <strong>Observed safe behavior:</strong> Intake validator detected missing key structures, caught schema divergence, and halted without writing corrupt values to persistent store.
-              </div>
-            </details>
-
-            <!-- Row 3: Indirect prompt injection -->
-            <details class="lp-fault-row">
-              <summary class="lp-fault-summary">
-                <div>
-                  <h3 class="lp-fault-name-h3">Indirect prompt injection</h3>
-                  <div class="lp-fault-condition">POLICY_BYPASS · TRUSTED_TOOL</div>
-                </div>
-                <div>
-                  <p class="lp-fault-desc">Adversarial payload concealed within compliance report attempts to override authorization bounds.</p>
-                </div>
-                <div class="lp-fault-actions">
-                  <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-                  <a class="lp-console-link" href="/runs/run_c261f2398e">See run →</a>
-                </div>
-              </summary>
-              <div class="lp-fault-details-body">
-                <strong>Observed safe behavior:</strong> Referee detected policy evasion tokens, isolated the tainted compliance output, and triggered immediate quarantine.
-              </div>
-            </details>
-
-            <!-- Row 4: HTTP 500 error loop -->
-            <details class="lp-fault-row">
-              <summary class="lp-fault-summary">
-                <div>
-                  <h3 class="lp-fault-name-h3">Repeated error loop</h3>
-                  <div class="lp-fault-condition">HTTP 500 · RECURRING_FAULT</div>
-                </div>
-                <div>
-                  <p class="lp-fault-desc">Core service crashes intermittently, threatening to exhaust agent token and retry budgets.</p>
-                </div>
-                <div class="lp-fault-actions">
-                  <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-                  <a class="lp-console-link" href="/runs/run_f7ae879258">See run →</a>
-                </div>
-              </summary>
-              <div class="lp-fault-details-body">
-                <strong>Observed safe behavior:</strong> Circuit breaker tripped after attempt threshold was reached, activating graceful fallback cache.
-              </div>
-            </details>
-
-            <!-- Row 5: Malformed output -->
-            <details class="lp-fault-row">
-              <summary class="lp-fault-summary">
-                <div>
-                  <h3 class="lp-fault-name-h3">Malformed output</h3>
-                  <div class="lp-fault-condition">CORRUPTED_JSON · UNPARSABLE</div>
-                </div>
-                <div>
-                  <p class="lp-fault-desc">Truncated strings and non-compliant JSON syntax injected into intake parser.</p>
-                </div>
-                <div class="lp-fault-actions">
-                  <span class="lp-badge lp-badge--planned">PLANNED</span>
-                  <span class="lp-mono" style="font-size: 13px; color: var(--ink-3);">No recorded run yet</span>
-                </div>
-              </summary>
-              <div class="lp-fault-details-body">
-                <strong>Status:</strong> Scenario catalog entry defined in <code>app/saboteur.py</code>; automated test harness runner pending live baseline synthesis.
-              </div>
-            </details>
+            <h4>What it does not show</h4>
+            <ul style="margin-bottom: 0;">
+              <li>That the agent behaved optimally or achieved business goals.</li>
+              <li>That the record is tamper-proof against unrecorded out-of-band state.</li>
+              <li>Public-key identity signatures (PKI) without an authority.</li>
+            </ul>
           </div>
         </div>
-      </section>
 
-      <!-- 04 How It Works (ONE Continuous Pipeline, no 6 cards!) -->
-      <section class="lp-section lp-section--paper" id="pipeline">
-        <div class="lp-container">
-          <div class="lp-section-head-grid">
-            <div class="lp-section-index-rail">
-              <span class="lp-section-index">04</span>
-              <span class="lp-mono">PIPELINE</span>
-            </div>
-            <div class="lp-section-title-rail">
-              <h2 class="lp-section-h2">Inject. Observe. Judge. Seal.</h2>
-              <p class="lp-section-lead">A continuous verification pipeline where every phase consumes verified inputs and emits deterministic outputs.</p>
-            </div>
-          </div>
+        <!-- CLAIMS LEDGER TABLE (ON SOLID GLASS) -->
+        <div class="lp-glass-solid lp-pad">
+          <h3 style="margin: 0 0 12px; font-size: 18px; font-weight: 600;">Audited claims ledger</h3>
+          <p style="margin: 0 0 18px; font-size: 14px; color: var(--tx-3);">
+            Every statement made on this page traces to code, an automated test, or recorded on-disk telemetry.
+          </p>
 
-          <div class="lp-pipeline-track">
-            <!-- Node 01: Subject -->
-            <div class="lp-pipeline-node">
-              <div class="lp-node-head">
-                <span class="lp-node-bullet">01</span>
-                <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-              </div>
-              <h3 class="lp-node-title">Subject</h3>
-              <p class="lp-node-desc">The target agent executes real multi-step tasks under strict sandbox supervision.</p>
-              <div class="lp-node-io">Goal → Tool invocations</div>
-            </div>
-
-            <!-- Node 02: Saboteur / FaultProxy -->
-            <div class="lp-pipeline-node lp-pipeline-node--fault">
-              <div class="lp-node-head">
-                <span class="lp-node-bullet">02</span>
-                <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-              </div>
-              <h3 class="lp-node-title">Saboteur</h3>
-              <p class="lp-node-desc">Adversarial proxy intercepts traffic and injects rate limits, drift, or injections.</p>
-              <div class="lp-node-io">Tool calls → Injected faults</div>
-            </div>
-
-            <!-- Node 03: Referee -->
-            <div class="lp-pipeline-node">
-              <div class="lp-node-head">
-                <span class="lp-node-bullet">03</span>
-                <span class="lp-badge lp-badge--tested">TESTED</span>
-              </div>
-              <h3 class="lp-node-title">Referee</h3>
-              <p class="lp-node-desc">Independent arbiter evaluates state preservation, recovery paths, and boundary compliance.</p>
-              <div class="lp-node-io">Execution trace → Verdict</div>
-            </div>
-
-            <!-- Node 04: Scorer -->
-            <div class="lp-pipeline-node">
-              <div class="lp-node-head">
-                <span class="lp-node-bullet">04</span>
-                <span class="lp-badge lp-badge--tested">TESTED</span>
-              </div>
-              <h3 class="lp-node-title">Scorer</h3>
-              <p class="lp-node-desc">Calculates overall resilience, fault tolerance, and safety preservation scores.</p>
-              <div class="lp-node-io">Verdict → Score metrics</div>
-            </div>
-
-            <!-- Node 05: Hardener -->
-            <div class="lp-pipeline-node">
-              <div class="lp-node-head">
-                <span class="lp-node-bullet">05</span>
-                <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-              </div>
-              <h3 class="lp-node-title">Hardener</h3>
-              <p class="lp-node-desc">Proposes actionable configuration diff patches for engineer review; never auto-applied.</p>
-              <div class="lp-node-io">Trace &amp; verdict → Advisory diff</div>
-            </div>
-
-            <!-- Node 06: Audit -->
-            <div class="lp-pipeline-node lp-pipeline-node--seal">
-              <div class="lp-node-head">
-                <span class="lp-node-bullet">06</span>
-                <span class="lp-badge lp-badge--tested">TESTED</span>
-              </div>
-              <h3 class="lp-node-title">Audit</h3>
-              <p class="lp-node-desc">Canonicalizes the entire run record and generates a tamper-evident SHA-256 seal.</p>
-              <div class="lp-node-io">Run packet → SHA-256 seal</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 05 Evidence Section (+ Claims Ledger) -->
-      <section class="lp-section lp-section--paper-2" id="evidence">
-        <div class="lp-container">
-          <div class="lp-section-head-grid">
-            <div class="lp-section-index-rail">
-              <span class="lp-section-index">05</span>
-              <span class="lp-mono">EVIDENCE</span>
-            </div>
-            <div class="lp-section-title-rail">
-              <h2 class="lp-section-h2">Evidence you can check, not take on faith.</h2>
-              <p class="lp-section-lead">Every execution artifact is hashed deterministically. Recompute the cryptographic digest on demand to verify integrity.</p>
-            </div>
-          </div>
-
-          <div class="lp-evidence-split">
-            <!-- Left: Verify Console -->
-            <div class="lp-verify-card lp-calibrated-frame">
-              <p class="lp-console-kicker">Canonical evidence packet verify console</p>
-              
-              <div class="lp-seal-chip-box" style="margin-top: 12px;">
-                <span class="lp-mono" style="font-size: 12px; color: var(--ink-3);">STORED SHA-256 DIGEST</span>
-                <div class="lp-seal-chip" style="font-size: 13px; line-height: 20px;">
-                  <span id="lp-evidence-full-hash" style="overflow-wrap: anywhere;">{{ evidence.sha256_audit_seal if evidence and evidence.sha256_audit_seal else '—' }}</span>
-                  <button class="lp-copy-btn" type="button" data-copy-target="lp-evidence-full-hash">
-                    <span class="lp-copy-text">Copy</span>
-                  </button>
-                </div>
-              </div>
-
-              <div style="margin-top: 20px; display: flex; align-items: center; gap: 14px;">
-                <button class="lp-btn lp-btn--primary" id="lp-verify-seal" type="button">Verify seal</button>
-                <a class="lp-console-link" href="/api/runs/run_d42996d50d/evidence" target="_blank">Download canonical JSON ↗</a>
-              </div>
-
-              <div class="lp-verify-state-box" id="lp-verify-state">
-                Ready to verify. Click above to recompute the canonical SHA-256 seal from the on-disk evidence packet.
-              </div>
-            </div>
-
-            <!-- Right: What This Proves / What It Does Not Prove -->
-            <div class="lp-evidence-sidebar-box">
-              <div class="lp-proves-block">
-                <h3 class="lp-proves-title">What this proves</h3>
-                <ul class="lp-proves-list">
-                  <li>The telemetry record has not been altered or modified since execution.</li>
-                  <li>The referee verdict and score were computed from these exact raw steps.</li>
-                  <li>The evidence packet can be independently verified with standard SHA-256 tools.</li>
-                </ul>
-              </div>
-
-              <div class="lp-proves-block" style="margin-bottom: 0;">
-                <h3 class="lp-proves-title" style="color: var(--fault);">What it does not prove</h3>
-                <ul class="lp-proves-list">
-                  <li>It does not prove the AI agent behaved optimally or achieved business success.</li>
-                  <li>It does not provide public-key identity (PKI) signatures without an authority.</li>
-                  <li>Tamper-evident sealing is not tamper-proof against unrecorded out-of-band state.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <!-- Claims Ledger Table -->
-          <div class="lp-ledger-container">
+          <div class="lp-ledger-wrap">
             <table class="lp-ledger-table" aria-label="Evidence claims ledger">
               <thead>
                 <tr>
                   <th>Claim</th>
                   <th>Supporting artifact</th>
                   <th>Status badge</th>
-                  <th>Verification link</th>
+                  <th>Verification target</th>
                 </tr>
               </thead>
               <tbody>
@@ -664,84 +388,119 @@
                   <td>Root routes and app overview are operational without authentication</td>
                   <td><code>app/main.py</code>, <code>app/templates/overview.html</code></td>
                   <td><span class="lp-badge lp-badge--implemented">IMPLEMENTED</span></td>
-                  <td><a class="lp-console-link" href="/app">/app →</a></td>
+                  <td><a href="/app">/app →</a></td>
                 </tr>
                 <tr>
                   <td>SHA-256 canonical seal algorithm is tested and verified</td>
                   <td><code>app/audit.py</code>, <code>tests/test_audit_seal.py</code></td>
                   <td><span class="lp-badge lp-badge--tested">TESTED</span></td>
-                  <td><a class="lp-console-link" href="/api/runs/run_d42996d50d/evidence/verify">API Verify →</a></td>
+                  <td><a href="/api/runs/run_d42996d50d/evidence/verify">API Verify →</a></td>
                 </tr>
                 <tr>
                   <td>Live &amp; historical run inspection with step-level telemetry and scores</td>
                   <td><code>app/orchestrator.py</code>, <code>runs/run_d42996d50d.json</code></td>
                   <td><span class="lp-badge lp-badge--tested">TESTED</span></td>
-                  <td><a class="lp-console-link" href="/runs/run_d42996d50d">Run detail →</a></td>
+                  <td><a href="/runs/run_d42996d50d">Run detail →</a></td>
                 </tr>
                 <tr>
                   <td>Adversarial fault catalog with 7 scenarios across 5 fault families</td>
                   <td><code>app/saboteur.py</code>, <code>app/models.py</code></td>
                   <td><span class="lp-badge lp-badge--implemented">IMPLEMENTED</span></td>
-                  <td><a class="lp-console-link" href="/api/faults">Catalog JSON →</a></td>
+                  <td><a href="/api/faults">Catalog JSON →</a></td>
                 </tr>
                 <tr>
                   <td>Neatlogs telemetry workflow &amp; OpenTelemetry span tracing</td>
                   <td><code>app/tracing.py</code></td>
                   <td><span class="lp-badge lp-badge--implemented">IMPLEMENTED</span></td>
-                  <td><a class="lp-console-link" href="/settings">Settings →</a></td>
+                  <td><a href="/api/health">Health status →</a></td>
                 </tr>
                 <tr>
                   <td>Entire local git checkpoint tracking for autonomous developer sessions</td>
                   <td><code>refs/entire/checkpoints/</code>, <code>.entire/</code></td>
                   <td><span class="lp-badge lp-badge--implemented">IMPLEMENTED</span></td>
-                  <td><a class="lp-console-link" href="https://github.com/Angad-Chede/Gauntlet" target="_blank" rel="noopener noreferrer">Git refs →</a></td>
+                  <td><a href="https://github.com/Angad-Chede/Gauntlet" target="_blank" rel="noopener noreferrer">Git refs →</a></td>
                 </tr>
                 <tr>
                   <td>cfo.ai verified financial model with 4 pricing tiers &amp; stress-test</td>
                   <td><code>docs/business-plan.md</code>, <code>docs/cfo-ai-evidence.md</code></td>
                   <td><span class="lp-badge lp-badge--verified">EXTERNALLY VERIFIED</span></td>
-                  <td><a class="lp-console-link" href="/settings">Model report →</a></td>
+                  <td><a href="/settings">Financial model →</a></td>
                 </tr>
                 <tr>
                   <td>Malformed output scenario catalog entry is not yet proven with real run</td>
                   <td><code>app/saboteur.py</code></td>
                   <td><span class="lp-badge lp-badge--planned">PLANNED</span></td>
-                  <td><span class="lp-mono" style="font-size: 13px; color: var(--ink-3);">Pending test</span></td>
+                  <td><span style="color: var(--tx-3);">Pending test</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-      </section>
 
-      <!-- 06 Before / After & Advisory Hardening (Real Patch Diff) -->
-      <section class="lp-section lp-section--paper" id="hardening">
-        <div class="lp-container">
-          <div class="lp-section-head-grid">
-            <div class="lp-section-index-rail">
-              <span class="lp-section-index">06</span>
-              <span class="lp-mono">HARDENING</span>
+        <!-- PARTNER EVIDENCE CARDS -->
+        <div class="lp-partners">
+          <div class="lp-glass lp-pad" style="display: flex; flex-direction: column;">
+            <div class="lp-card-head">
+              <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
+              <a href="/api/health" class="lp-btn lp-btn-glass" style="height: 28px; padding: 0 10px; font-size: 12px;">Trace health ↗</a>
             </div>
-            <div class="lp-section-title-rail">
-              <h2 class="lp-section-h2">Advisory hardening recommendations.</h2>
-              <p class="lp-section-lead">When a run encounters an adversarial boundary, the Hardener generates precise remediation patches for engineer review. Never applied automatically.</p>
+            <h3>Neatlogs</h3>
+            <p>Execution traces for orchestration spans and fault injections.</p>
+            <div class="lp-partner-data">
+              <div>SDK: <strong>v1.4.26</strong></div>
+              <div>Workflow: <strong>GAUNTLET</strong></div>
+              <div>Status: <strong>Active &amp; Initialized</strong></div>
             </div>
           </div>
 
-          <div class="lp-hardening-advisory-card lp-calibrated-frame">
-            <div class="lp-advisory-banner">
-              <span>⚠ Advisory only; never applied automatically</span>
+          <div class="lp-glass lp-pad" style="display: flex; flex-direction: column;">
+            <div class="lp-card-head">
+              <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
+              <a href="https://entire.io/gh/Angad-Chede/Gauntlet/commit/9cf6839217443fabbaefefc468b20ca21f1b4ebd" target="_blank" rel="noopener noreferrer" class="lp-btn lp-btn-glass" style="height: 28px; padding: 0 10px; font-size: 12px;">Commit link ↗</a>
             </div>
+            <h3>Entire</h3>
+            <p>Git commit checkpoints for code changes behind each development session.</p>
+            <div class="lp-partner-data">
+              <div>Checkpoint: <strong>01M4KSQKWSP4YN70VPDY5MBCZS</strong></div>
+              <div>Commit: <strong>9cf6839</strong></div>
+              <div>Branch: <strong>main</strong></div>
+            </div>
+          </div>
 
-            <h3 style="margin: 0; font-size: 20px; font-weight: 600;">Exponential Jittered Backoff for Rate Limits</h3>
-            <p style="margin: 8px 0 14px; font-size: 15px; color: var(--ink-2);">
-              <strong>Diagnosis:</strong> Agent attempted immediate retries without respecting HTTP 429 Retry-After directives from the upstream payment proxy.
-            </p>
-            <p style="margin: 0; font-size: 15px; color: var(--ink-2);">
-              <strong>Remediation:</strong> Configure retry decorators with full-jitter exponential backoff respecting Retry-After response headers.
-            </p>
+          <div class="lp-glass lp-pad" style="display: flex; flex-direction: column;">
+            <div class="lp-card-head">
+              <span class="lp-badge lp-badge--verified">EXTERNALLY VERIFIED</span>
+              <a href="/settings" class="lp-btn lp-btn-glass" style="height: 28px; padding: 0 10px; font-size: 12px;">Ari model ↗</a>
+            </div>
+            <h3>cfo.ai</h3>
+            <p>Ari financial model, scenario comparison, and liquidity stress-test.</p>
+            <div class="lp-partner-data">
+              <div>Ending cash: <strong>$400,447</strong> (Month 12)</div>
+              <div>Cash trough: <strong>$327,627</strong> (Month 8)</div>
+              <div>Tiers: <strong>Community, Pro, Team, Enterprise</strong></div>
+            </div>
+          </div>
+        </div>
 
-            <pre class="lp-diff-pre"><code><span class="lp-diff-del">--- a/app/subject.py</span>
+        <!-- 05. ADVISORY HARDENING (REAL PATCH DIFF) -->
+        <div class="lp-sec-h" id="hardening">
+          <h2>Advisory hardening recommendations.</h2>
+          <p>When a run encounters an adversarial boundary, the Hardener generates precise remediation patches for engineer review. Never applied automatically.</p>
+        </div>
+
+        <div class="lp-glass lp-pad">
+          <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <span class="lp-advisory-pill" style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 999px; font: 500 12px var(--mono); background: rgba(255, 122, 61, 0.15); color: #FFA36F; box-shadow: inset 0 0 0 1px rgba(255, 122, 61, 0.32);">Advisory only; never applied automatically</span>
+            <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
+          </div>
+
+          <h3 style="margin: 0 0 8px; font-size: 20px; font-weight: 600;">Exponential Jittered Backoff for Rate Limits</h3>
+          <p style="margin: 0 0 16px; color: var(--tx-2); font-size: 15px;">
+            <strong>Diagnosis:</strong> Agent attempted immediate retries without respecting HTTP 429 Retry-After directives from the upstream payment proxy.<br>
+            <strong>Remediation:</strong> Configure retry decorators with full-jitter exponential backoff respecting Retry-After response headers.
+          </p>
+
+          <pre class="lp-diff-box"><code><span class="lp-diff-del">--- a/app/subject.py</span>
 <span class="lp-diff-add">+++ b/app/subject.py</span>
 @@ -18,3 +18,7 @@
 <span class="lp-diff-del">-for attempt in range(max_retries):</span>
@@ -752,251 +511,46 @@
 <span class="lp-diff-add">+    max_delay=30.0</span>
 <span class="lp-diff-add">+)</span></code></pre>
 
-            <div style="margin-top: 18px; display: flex; align-items: center; justify-content: space-between;">
-              <span class="lp-mono" style="font-size: 12px; color: var(--ink-3);">RULE ID: HARDEN-RETRY-03 · SEVERITY: MEDIUM</span>
-              <a class="lp-console-link" href="/runs/run_d42996d50d/hardening">Inspect full hardening analysis →</a>
-            </div>
+          <!-- Hidden reference to preview_overview.webp for compatibility -->
+          <div style="display: none;">
+            <img src="/static/landing/img/preview_overview.webp" alt="overview preview">
           </div>
         </div>
-      </section>
 
-      <!-- 07 Architecture + Integrations -->
-      <section class="lp-section lp-section--paper-2" id="architecture">
-        <div class="lp-container">
-          <div class="lp-section-head-grid">
-            <div class="lp-section-index-rail">
-              <span class="lp-section-index">07</span>
-              <span class="lp-mono">ARCHITECTURE</span>
-            </div>
-            <div class="lp-section-title-rail">
-              <h2 class="lp-section-h2">Engineered for uncompromised rigor.</h2>
-              <p class="lp-section-lead">Orthogonal subsystem boundaries. The evaluation referee, chaos proxy, and audit hasher are decoupled from the target agent runtime.</p>
-            </div>
+        <!-- 06. FINAL CALL TO ACTION -->
+        <div class="lp-glass lp-final">
+          <h2>Run the gauntlet.</h2>
+          <p>Start with a real crash test, then inspect and verify the sealed record.</p>
+
+          <div class="lp-cta-row">
+            <button class="lp-btn lp-btn-pearl" id="lp-run-demo-footer" type="button">Run a crash test</button>
+            <a class="lp-btn lp-btn-glass" href="https://github.com/Angad-Chede/Gauntlet" target="_blank" rel="noopener noreferrer">Repo ↗</a>
+            <a class="lp-btn lp-btn-glass" href="/api/health" target="_blank">Health check ↗</a>
+            <a class="lp-btn lp-btn-glass" href="/app">Dashboard overview ↗</a>
           </div>
-
-          <!-- Real Inline-SVG Diagram on 8px grid with arrow markers and consistent node sizes -->
-          <div class="lp-arch-wrapper">
-            <svg class="lp-arch-svg" viewBox="0 0 1020 420" role="img" aria-label="GAUNTLET modular architecture diagram">
-              <defs>
-                <marker id="arch-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 1 L 9 5 L 0 9 z" fill="#4A4F57" />
-                </marker>
-                <marker id="arch-arrow-dash" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 1 L 9 5 L 0 9 z" fill="#6B7280" />
-                </marker>
-              </defs>
-
-              <!-- Group Frame 1: Run Harness -->
-              <rect x="24" y="24" width="300" height="230" rx="8" fill="#FFFFFF" stroke="#E7E5E4" stroke-width="1.5" />
-              <text x="40" y="52" fill="#59616E" font-family="Geist Mono, monospace" font-size="12" font-weight="600" letter-spacing="0.08em">RUN HARNESS</text>
-              
-              <!-- Subject Node -->
-              <rect x="44" y="74" width="260" height="58" rx="6" fill="#F7F6F4" stroke="#D6D3D1" stroke-width="1" />
-              <text x="64" y="100" fill="#14161A" font-family="Geist, sans-serif" font-size="15" font-weight="600">Subject (Target Agent)</text>
-              <text x="64" y="118" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">Autonomous work loop</text>
-
-              <!-- Saboteur / FaultProxy Node -->
-              <rect x="44" y="162" width="260" height="68" rx="6" fill="#FFF1EA" stroke="#FBD6C4" stroke-width="1" />
-              <text x="64" y="188" fill="#D9480F" font-family="Geist, sans-serif" font-size="15" font-weight="600">Saboteur + FaultProxy</text>
-              <text x="64" y="206" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">Dynamic fault injection</text>
-              <text x="64" y="222" fill="#D9480F" font-family="Geist Mono, monospace" font-size="12">IMPLEMENTED</text>
-
-              <!-- Connector: Subject to Saboteur -->
-              <path d="M 174 132 L 174 162" stroke="#4A4F57" stroke-width="1.5" marker-end="url(#arch-arrow)" fill="none" />
-
-              <!-- Connector: Run Harness to Evaluation -->
-              <path d="M 324 196 L 368 196" stroke="#4A4F57" stroke-width="1.5" marker-end="url(#arch-arrow)" fill="none" />
-              <text x="346" y="186" text-anchor="middle" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">trace</text>
-
-              <!-- Group Frame 2: Evaluation -->
-              <rect x="368" y="24" width="360" height="230" rx="8" fill="#FFFFFF" stroke="#E7E5E4" stroke-width="1.5" />
-              <text x="384" y="52" fill="#59616E" font-family="Geist Mono, monospace" font-size="12" font-weight="600" letter-spacing="0.08em">EVALUATION</text>
-
-              <!-- Referee Node -->
-              <rect x="388" y="74" width="150" height="68" rx="6" fill="#F7F6F4" stroke="#D6D3D1" stroke-width="1" />
-              <text x="404" y="100" fill="#14161A" font-family="Geist, sans-serif" font-size="15" font-weight="600">Referee</text>
-              <text x="404" y="118" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">Verdict analyzer</text>
-              <text x="404" y="132" fill="#1F7A4D" font-family="Geist Mono, monospace" font-size="12">TESTED</text>
-
-              <!-- Scorer Node -->
-              <rect x="558" y="74" width="150" height="68" rx="6" fill="#F7F6F4" stroke="#D6D3D1" stroke-width="1" />
-              <text x="574" y="100" fill="#14161A" font-family="Geist, sans-serif" font-size="15" font-weight="600">Scorer</text>
-              <text x="574" y="118" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">Resilience metrics</text>
-              <text x="574" y="132" fill="#1F7A4D" font-family="Geist Mono, monospace" font-size="12">TESTED</text>
-
-              <!-- Connector: Referee to Scorer -->
-              <path d="M 538 108 L 558 108" stroke="#4A4F57" stroke-width="1.5" marker-end="url(#arch-arrow)" fill="none" />
-
-              <!-- Hardener Node -->
-              <rect x="388" y="162" width="320" height="68" rx="6" fill="#F7F6F4" stroke="#D6D3D1" stroke-width="1" />
-              <text x="404" y="188" fill="#14161A" font-family="Geist, sans-serif" font-size="15" font-weight="600">Hardener (Advisory Only)</text>
-              <text x="404" y="206" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">Diff patch proposal generator</text>
-              <text x="404" y="222" fill="#1E4BBD" font-family="Geist Mono, monospace" font-size="12">IMPLEMENTED</text>
-
-              <!-- Connector: Referee to Hardener -->
-              <path d="M 463 142 L 463 162" stroke="#4A4F57" stroke-width="1.5" marker-end="url(#arch-arrow)" fill="none" />
-
-              <!-- Connector: Evaluation to Evidence -->
-              <path d="M 728 108 L 768 108" stroke="#4A4F57" stroke-width="1.5" marker-end="url(#arch-arrow)" fill="none" />
-              <text x="748" y="98" text-anchor="middle" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">score</text>
-
-              <!-- Group Frame 3: Evidence -->
-              <rect x="768" y="24" width="228" height="230" rx="8" fill="#FFFFFF" stroke="#E7E5E4" stroke-width="1.5" />
-              <text x="784" y="52" fill="#59616E" font-family="Geist Mono, monospace" font-size="12" font-weight="600" letter-spacing="0.08em">EVIDENCE</text>
-
-              <!-- Audit Node -->
-              <rect x="788" y="74" width="188" height="156" rx="6" fill="#EAF6EF" stroke="#C9E8D6" stroke-width="1" />
-              <text x="804" y="104" fill="#1F7A4D" font-family="Geist, sans-serif" font-size="16" font-weight="600">Audit Hasher</text>
-              <text x="804" y="124" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">Canonical SHA-256 seal</text>
-              <text x="804" y="142" fill="#1F7A4D" font-family="Geist Mono, monospace" font-size="12">TESTED</text>
-              <rect x="804" y="160" width="156" height="50" rx="4" fill="#FFFFFF" stroke="#C9E8D6" stroke-width="1" />
-              <text x="814" y="180" fill="#14161A" font-family="Geist Mono, monospace" font-size="12">7787593a...</text>
-              <text x="814" y="198" fill="#1F7A4D" font-family="Geist Mono, monospace" font-size="12">TAMPER-EVIDENT</text>
-
-              <!-- Observability & Workflow Rail Below -->
-              <line x1="24" y1="280" x2="996" y2="280" stroke="#E7E5E4" stroke-width="1" stroke-dasharray="4 4" />
-              <text x="40" y="304" fill="#59616E" font-family="Geist Mono, monospace" font-size="12" font-weight="600" letter-spacing="0.08em">OBSERVABILITY &amp; WORKFLOW INSTRUMENTATION</text>
-
-              <!-- Neatlogs Node -->
-              <rect x="44" y="324" width="280" height="68" rx="6" fill="#F7F6F4" stroke="#D6D3D1" stroke-width="1" />
-              <text x="64" y="350" fill="#14161A" font-family="Geist, sans-serif" font-size="15" font-weight="600">Neatlogs Telemetry</text>
-              <text x="64" y="368" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">Workflow trace spans &amp; SDK v1.4.26</text>
-              <path d="M 174 324 L 174 254" stroke="#6B7280" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arch-arrow-dash)" fill="none" />
-
-              <!-- Entire Node -->
-              <rect x="368" y="324" width="280" height="68" rx="6" fill="#F7F6F4" stroke="#D6D3D1" stroke-width="1" />
-              <text x="388" y="350" fill="#14161A" font-family="Geist, sans-serif" font-size="15" font-weight="600">Entire Checkpoints</text>
-              <text x="388" y="368" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">Local git session ref tracking</text>
-              <path d="M 508 324 L 508 254" stroke="#6B7280" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arch-arrow-dash)" fill="none" />
-
-              <!-- cfo.ai Node -->
-              <rect x="692" y="324" width="284" height="68" rx="6" fill="#F7F6F4" stroke="#D6D3D1" stroke-width="1" />
-              <text x="712" y="350" fill="#14161A" font-family="Geist, sans-serif" font-size="15" font-weight="600">cfo.ai Financial Model</text>
-              <text x="712" y="368" fill="#59616E" font-family="Geist Mono, monospace" font-size="12">Compute COGS &amp; Ari stress-test</text>
-              <path d="M 834 324 L 834 254" stroke="#6B7280" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arch-arrow-dash)" fill="none" />
-            </svg>
-          </div>
-
-          <!-- Partner Proof Band (Three Columns Separated by Hairlines, Not Cards) -->
-          <div class="lp-partner-band">
-            <!-- Column 1: Neatlogs -->
-            <div class="lp-partner-col">
-              <span class="lp-partner-role">OBSERVABILITY &amp; TRACING</span>
-              <h3 class="lp-partner-name">Neatlogs</h3>
-              <p class="lp-partner-summary">Instruments the orchestration lifecycle, fault injections, and scoring decisions into structured workflow traces.</p>
-              <ul class="lp-partner-evidence">
-                <li>SDK Version: 1.4.26 verified</li>
-                <li>Workflow: GAUNTLET active</li>
-                <li>Trace spans: OpenTelemetry compliant</li>
-              </ul>
-              <div class="lp-partner-footer">
-                <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-                <a class="lp-console-link" href="/settings">Settings status →</a>
-              </div>
-            </div>
-
-            <!-- Column 2: Entire -->
-            <div class="lp-partner-col">
-              <span class="lp-partner-role">WORKFLOW EVIDENCE</span>
-              <h3 class="lp-partner-name">Entire</h3>
-              <p class="lp-partner-summary">Captures immutable git commit checkpoints for every developer session throughout the build of this repository.</p>
-              <ul class="lp-partner-evidence">
-                <li>Checkpoint ref: 01M4KSQKWSP4YN70VPDY5MBCZS</li>
-                <li>Short commit SHA: e9e62f0</li>
-                <li>Branch: entire/9dba0ff-e3b0c4</li>
-              </ul>
-              <div class="lp-partner-footer">
-                <span class="lp-badge lp-badge--implemented">IMPLEMENTED</span>
-                <a class="lp-console-link" href="https://github.com/Angad-Chede/Gauntlet" target="_blank" rel="noopener noreferrer">Git refs →</a>
-              </div>
-            </div>
-
-            <!-- Column 3: cfo.ai -->
-            <div class="lp-partner-col">
-              <span class="lp-partner-role">FINANCIAL ARCHITECTURE</span>
-              <h3 class="lp-partner-name">cfo.ai</h3>
-              <p class="lp-partner-summary">Models business unit economics, variable chaos proxy COGS, tier pricing, and runway stress-tests using Ari.</p>
-              <ul class="lp-partner-evidence">
-                <li>Pricing tiers: Community, Pro, Team, Enterprise</li>
-                <li>Month 12 ending cash: $400,447</li>
-                <li>Min cash trough: $327,627 (Month 8)</li>
-              </ul>
-              <div class="lp-partner-footer">
-                <span class="lp-badge lp-badge--verified">EXTERNALLY VERIFIED</span>
-                <a class="lp-console-link" href="/settings">Financial report →</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 08 Final Call to Action -->
-      <section class="lp-final-cta">
-        <div class="lp-container lp-final-cta-inner">
-          <h2 class="lp-final-cta-h2">Run the gauntlet.</h2>
-          <p class="lp-final-cta-lead">Start with a real adversarial crash test and inspect the tamper-evident sealed execution record in seconds.</p>
-
-          <div class="lp-final-cta-btns">
-            <button class="lp-btn lp-btn--primary" id="lp-run-demo-footer" type="button">Run a crash test</button>
-            <a class="lp-btn lp-btn--secondary" href="/runs/run_d42996d50d">Inspect run_d42996d50d</a>
-          </div>
-
-          <div class="lp-reviewer-links" aria-label="Reviewer verification links">
-            <a href="https://github.com/Angad-Chede/Gauntlet" target="_blank" rel="noopener noreferrer">Repo ↗</a>
-            <span>·</span>
-            <a href="/api/health">Neatlogs trace ↗</a>
-            <span>·</span>
-            <a href="https://github.com/Angad-Chede/Gauntlet" target="_blank" rel="noopener noreferrer">Entire checkpoints ↗</a>
-            <span>·</span>
-            <a href="/settings">cfo.ai plan ↗</a>
-            <span>·</span>
-            <a href="/app">Dashboard overview ↗</a>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="lp-footer">
-      <div class="lp-container lp-footer-grid">
-        <div class="lp-footer-brand">
-          <div class="lp-brand-group">
-            <span class="lp-logo-mark" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <line x1="2" y1="12" x2="8" y2="12" stroke="#14161A" />
-                <circle cx="12" cy="12" r="2" fill="#D9480F" stroke="#D9480F" />
-                <line x1="16" y1="12" x2="22" y2="12" stroke="#1F7A4D" />
-              </svg>
-            </span>
-            <span class="lp-wordmark">GAUNTLET</span>
-          </div>
-          <p>neatHack by neatlogs · AI-Agent Chaos Engineering</p>
-        </div>
-
-        <div class="lp-footer-nav" aria-label="Product navigation">
-          <a href="/app">Dashboard Overview</a>
-          <a href="/new">Configure New Run</a>
-          <a href="/settings">System Settings &amp; Tracing</a>
-          <a href="https://github.com/Angad-Chede/Gauntlet" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
-        </div>
-
-        <div class="lp-footer-limits">
-          <p class="lp-footer-limits-title">Known limitations</p>
-          <ul class="lp-footer-limits-list" aria-label="Known platform limitations">
-            <li>Runs persist locally to on-disk JSON; no remote multi-tenant auth is claimed.</li>
-            <li>Hardening remediation patches are advisory-only and are never applied to disk automatically.</li>
-            <li>Some scenarios are defined in code catalogs but currently lack a historical recorded run.</li>
-          </ul>
         </div>
       </div>
-    </footer>
 
-    <noscript>
-      <style>
-        .lp-preview-pane { display: block !important; }
-        .lp-waterfall-track { display: flex !important; }
-      </style>
-    </noscript>
+      <!-- FOOTER -->
+      <footer class="lp-foot">
+        <div>
+          <strong>GAUNTLET · neatHack by neatlogs</strong>
+        </div>
+
+        <div>
+          Hardening is advisory only and never applied automatically. Background art is AI-generated.
+        </div>
+
+        <div class="lp-foot-limits">
+          <strong>Known limitations:</strong>
+          <ul>
+            <li>Runs persist locally to on-disk JSON; no remote multi-tenant auth is claimed.</li>
+            <li>Hardening remediation patches are advisory-only and are never applied to disk automatically.</li>
+            <li>Some scenarios are defined in code catalogs (e.g. malformed output) but currently lack a historical recorded run.</li>
+          </ul>
+        </div>
+      </footer>
+    </main>
 
     <script src="/static/landing/landing.js"></script>
   </body>
