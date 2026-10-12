@@ -1,10 +1,18 @@
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
+import sys
+import time
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
+BASE_DIR = Path(__file__).resolve().parent
+ROOT_DIR = BASE_DIR.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from app.models import (
     AdvisoryRepairComparison,
@@ -50,6 +58,15 @@ def _page(request: Request, name: str, nav: str, status_code: int = 200, **extra
     )
 
 
+def _hero_bg_context() -> dict:
+    img_dir = BASE_DIR / "static" / "landing" / "img"
+    return {
+        "hero_bg_1920_exists": (img_dir / "hero-bg-1920.webp").exists(),
+        "hero_bg_1280_exists": (img_dir / "hero-bg-1280.webp").exists(),
+        "hero_bg_mobile_exists": (img_dir / "hero-bg-mobile.webp").exists(),
+    }
+
+
 @app.get("/landing", response_class=HTMLResponse)
 async def landing_page(request: Request):
     baseline_run = orchestrator.get_run("run_d42996d50d")
@@ -63,6 +80,7 @@ async def landing_page(request: Request):
         evidence=evidence,
         all_runs=orchestrator.list_runs(),
         tracing_status=get_tracing_status(),
+        **_hero_bg_context(),
     )
 
 
@@ -84,6 +102,7 @@ async def root_landing_page(request: Request):
         evidence=evidence,
         all_runs=orchestrator.list_runs(),
         tracing_status=get_tracing_status(),
+        **_hero_bg_context(),
     )
 
 
@@ -129,6 +148,82 @@ async def health_check():
         "version": "0.1.0",
         "orchestrator_ready": True,
         "tracing": get_tracing_status(),
+        "storage": {
+            "runs_directory": str(orchestrator.runs_dir),
+            "evidence_directory": str(orchestrator.evidence_dir),
+            "mode": "ephemeral_resilient",
+        },
+        "live_test_subject": "available",
+    }
+
+
+# ==============================================================================
+# Live Test Subject Service (Simulated External Banking & Settlement API)
+# Allows genuine HTTP requests to execute under live network and fault conditions.
+# ==============================================================================
+
+@app.get("/api/test-subject/account/{account_id}")
+async def live_subject_query_account(account_id: str):
+    """Live target API endpoint for account status inquiry."""
+    return {
+        "account_id": account_id,
+        "status": "ACTIVE",
+        "balance": 15000.00,
+        "tier": "ENTERPRISE",
+        "currency": "USD",
+        "transport": "live_http",
+    }
+
+
+@app.post("/api/test-subject/compliance/verify")
+async def live_subject_verify_compliance(payload: dict):
+    """Live target API endpoint for AML/compliance risk check."""
+    return {
+        "account_id": payload.get("account_id"),
+        "approved": True,
+        "risk_score": 0.08,
+        "audit_tag": "AML_CHECK_PASS",
+        "transport": "live_http",
+    }
+
+
+@app.post("/api/test-subject/settle")
+async def live_subject_settle_transfer(request: Request):
+    """
+    Live target API endpoint for settlement transfers.
+    Supports controlled fault injection via X-Gauntlet-Fault header or query parameter.
+    When fault '503' is requested, responds with real HTTP 503 Service Unavailable
+    and Retry-After: 2 header to test genuine agent backoff recovery.
+    When fault 'timeout' is requested, induces server-side delay exceeding client timeout.
+    """
+    body = await request.json() if request.headers.get("content-type") == "application/json" else {}
+    fault_header = request.headers.get("X-Gauntlet-Fault") or request.query_params.get("fault")
+
+    if fault_header in ("503", "http_503"):
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error": "Banking liquidity bridge temporarily unavailable",
+                "code": "SERVICE_UNAVAILABLE",
+                "target": "settle_transfer",
+            },
+            headers={"Retry-After": "2"},
+        )
+
+    if fault_header == "timeout":
+        await asyncio.sleep(4.0)
+        return JSONResponse(
+            status_code=504,
+            content={"error": "Gateway Timeout during settlement processing"},
+        )
+
+    return {
+        "tx_id": f"tx_live_{int(time.time() * 1000)}",
+        "source": body.get("source"),
+        "destination": body.get("dest"),
+        "settled_amount": body.get("amount", 0.0),
+        "status": "COMPLETED",
+        "transport": "live_http",
     }
 
 
@@ -141,7 +236,7 @@ async def list_fault_catalog():
 @app.post("/api/run", response_model=GauntletRun)
 async def trigger_run(payload: RunRequest):
     """Launch a new stress-test Gauntlet against the Subject agent."""
-    run = await orchestrator.execute_gauntlet(payload)
+    run = await orchestrator.execute_gauntlet(payload, app=app)
     return run
 
 
@@ -198,7 +293,7 @@ async def get_repair_comparison(run_id: str, custom_config: Optional[SubjectConf
     if not run:
         raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
     try:
-        return await orchestrator.evaluate_advisory_repair(run_id, hardened_config=custom_config)
+        return await orchestrator.evaluate_advisory_repair(run_id, hardened_config=custom_config, app=app)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
