@@ -1,118 +1,256 @@
-import { api, escapeHtml, formatScore, formatTime, safetyBadge, verdictBadge } from "./gauntlet.js";
+import {
+  api,
+  copyText,
+  escapeHtml,
+  formatCompactTime,
+  formatScore,
+  formatTime,
+  safetyBadge,
+  verdictBadge,
+  bindSpotlights
+} from "./gauntlet.js";
+
+let allRuns = [];
+let currentFilter = "all";
 
 function meanResilience(runs) {
   const scores = runs
     .map((run) => run.score?.overall_resilience_score)
     .filter((value) => typeof value === "number");
-  if (!scores.length) return null;
-  return scores.reduce((sum, value) => sum + value, 0) / scores.length;
+  if (!scores.length) return { mean: null, count: 0 };
+  const sum = scores.reduce((acc, val) => acc + val, 0);
+  return { mean: sum / scores.length, count: scores.length };
 }
 
-function sparkPoints(runs) {
-  const scored = [...runs].reverse()
-    .map((run) => run.score?.overall_resilience_score)
-    .filter((value) => typeof value === "number");
-  if (scored.length < 2) return null;
-  const max = Math.max(...scored, 1);
-  const min = Math.min(...scored, 0);
-  const span = Math.max(max - min, 1);
-  return scored.map((value, index) => {
-    const x = (index / (scored.length - 1)) * 220;
-    const y = 48 - ((value - min) / span) * 40;
+function filterRuns(runs, filter) {
+  if (filter === "faults") {
+    return runs.filter((r) => (r.faults && r.faults.length > 0) || (r.score?.total_faults_applied > 0));
+  }
+  if (filter === "baseline") {
+    return runs.filter((r) => (!r.faults || r.faults.length === 0) && (!r.score?.total_faults_applied));
+  }
+  return runs;
+}
+
+function renderTable(runs) {
+  const filtered = filterRuns(runs, currentFilter);
+  const countEl = document.getElementById("showing-count");
+  if (countEl) {
+    countEl.textContent = `Showing ${Math.min(filtered.length, 12)} of ${filtered.length} runs${currentFilter !== "all" ? ` (filtered by ${currentFilter})` : ""}`;
+  }
+
+  const body = document.getElementById("runs-body");
+  if (!filtered.length) {
+    body.innerHTML = `
+      <div class="tr" role="row" style="grid-template-columns:1fr;padding:24px;text-align:center">
+        <span style="color:var(--tx-3)">No runs match the selected filter.</span>
+      </div>
+    `;
+    return;
+  }
+
+  body.innerHTML = filtered.slice(0, 12).map((run) => {
+    const faults = run.score?.total_faults_applied ?? run.faults?.length ?? 0;
+    const isClean = faults === 0;
+    const scoreVal = typeof run.score?.overall_resilience_score === "number"
+      ? run.score.overall_resilience_score.toFixed(1)
+      : (isClean ? `<span style="color:var(--tx-3)">Not scored</span>` : "—");
+
+    const timeCompact = formatCompactTime(run.timestamp);
+    const timeFull = formatTime(run.timestamp);
+
+    return `
+      <div class="tr" role="row">
+        <span class="id">
+          <a href="/runs/${encodeURIComponent(run.run_id)}" translate="no" title="Open inspector for ${escapeHtml(run.run_id)}">
+            ${escapeHtml(run.run_id)}
+          </a>
+          <button class="icon-btn" style="width:24px;height:24px;border-radius:6px;padding:0" type="button" data-copy="${escapeHtml(run.run_id)}" aria-label="Copy run ID">
+            <svg class="i" style="width:11px;height:11px"><use href="#i-copy"/></svg>
+          </button>
+        </span>
+        <span class="ag">${escapeHtml(run.subject?.name || "Autonomous Assistant v1")}</span>
+        <span class="vv">${verdictBadge(run.verdict?.verdict)}</span>
+        <span class="ss">${safetyBadge(run.verdict?.safety_boundary_breached)}</span>
+        <span class="num tabular">${scoreVal}</span>
+        <span class="w" title="${escapeHtml(timeFull)}">${escapeHtml(timeCompact)}</span>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderTrend(runs) {
+  const host = document.getElementById("spark");
+  // Chronological order: oldest to newest
+  const scoredPoints = [...runs].reverse()
+    .map((r) => ({
+      id: r.run_id,
+      score: r.score?.overall_resilience_score,
+      time: r.timestamp,
+    }))
+    .filter((pt) => typeof pt.score === "number");
+
+  if (scoredPoints.length < 3) {
+    host.innerHTML = `
+      <div style="padding:18px;text-align:center">
+        <p style="margin:0;font-size:14px;color:var(--tx-3)">
+          Resilience trajectory requires at least 3 scored runs. Clean baseline runs do not contribute index points.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  const w = 600;
+  const h = 120;
+  const pad = 24;
+  const plotW = w - pad * 2;
+  const plotH = h - pad * 2;
+
+  const pointsSvg = scoredPoints.map((pt, idx) => {
+    const x = pad + (idx / (scoredPoints.length - 1)) * plotW;
+    // Y scale: 0 at bottom, 100 at top
+    const y = pad + plotH - (Math.max(0, Math.min(100, pt.score)) / 100) * plotH;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(" ");
-}
 
-function renderRuns(runs) {
-  const body = document.getElementById("runs-body");
-  if (!runs.length) {
-    body.innerHTML = `<tr><td colspan="6"><div class="empty">
-      <h3>No test runs yet</h3>
-      <p>Start an adversarial experiment to generate a resilience report, evidence packet, and advisory patches.</p>
-      <a class="btn btn-primary" href="/new">New test run</a>
-    </div></td></tr>`;
-    return;
-  }
-  body.innerHTML = runs.slice(0, 12).map((run) => {
-    const faults = run.score?.total_faults_applied ?? run.faults?.length ?? 0;
-    const resilience = faults === 0 ? "Unavailable (no faults)" : formatScore(run.score?.overall_resilience_score);
-    return `<tr>
-      <td><a class="row-id mono" href="/runs/${encodeURIComponent(run.run_id)}" translate="no">${escapeHtml(run.run_id)}</a></td>
-      <td>${escapeHtml(run.subject?.name || "—")}</td>
-      <td>${verdictBadge(run.verdict?.verdict)}</td>
-      <td>${safetyBadge(run.verdict?.safety_boundary_breached)}</td>
-      <td class="tabular">${escapeHtml(resilience)}</td>
-      <td class="muted">${escapeHtml(formatTime(run.timestamp))}</td>
-    </tr>`;
-  }).join("");
-}
+  const lastPt = scoredPoints[scoredPoints.length - 1];
 
-function renderLatest(run, catalog) {
-  const host = document.getElementById("latest-run");
-  if (!run) {
-    host.innerHTML = `<div class="empty"><h3>Waiting for the first experiment</h3><p>Metrics stay empty until a real run exists. A clean run with no faults cannot prove resilience.</p></div>`;
-    return;
-  }
-  const faults = run.score?.total_faults_applied ?? run.faults?.length ?? 0;
-  const injected = new Set((run.faults || []).map((fault) => fault.id));
-  const coverage = (catalog || []).map((fault) => {
-    const on = injected.has(fault.id);
-    return `<li class="muted">${on ? "Covered" : "Not in latest run"} — ${escapeHtml(fault.name)} <span class="mono">(${escapeHtml(fault.id)})</span></li>`;
-  }).join("");
   host.innerHTML = `
-    <div class="panel-h"><h3>Latest run</h3><a href="/runs/${encodeURIComponent(run.run_id)}">Open report</a></div>
-    <p class="mono" translate="no">${escapeHtml(run.run_id)}</p>
-    <p>${escapeHtml(run.verdict?.summary || "No referee summary.")}</p>
-    <div class="summary-list">
-      <div><span>Task / referee verdict</span>${verdictBadge(run.verdict?.verdict)}</div>
-      <div><span>Safety preservation</span>${safetyBadge(run.verdict?.safety_boundary_breached)} <span class="tabular">${escapeHtml(formatScore(run.score?.safety_preservation_score))}</span></div>
-      <div><span>Fault tolerance</span><span class="tabular">${faults ? escapeHtml(formatScore(run.score?.fault_tolerance_score)) : "Unavailable"}</span></div>
-      <div><span>Recovery efficiency</span><span class="tabular">${faults ? escapeHtml(formatScore(run.score?.recovery_efficiency_score)) : "Unavailable"}</span></div>
-      <div><span>Faults applied</span><span>${faults}</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+      <span style="font-size:13px;color:var(--tx-3)">Trajectory over ${scoredPoints.length} scored runs</span>
+      <span style="font-size:13.5px;color:var(--tx-2)">Latest index: <strong class="tabular" style="color:#FFFFFF">${lastPt.score.toFixed(1)}</strong></span>
     </div>
-    <h3 class="field-label" style="margin-top:16px">Fault-family coverage (latest run)</h3>
-    <ul>${coverage}</ul>
+    <svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Trajectory chart showing scores from 0 to 100 over ${scoredPoints.length} runs">
+      <!-- Grid lines -->
+      <line x1="${pad}" y1="${pad}" x2="${w - pad}" y2="${pad}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3 3"/>
+      <line x1="${pad}" y1="${pad + plotH / 2}" x2="${w - pad}" y2="${pad + plotH / 2}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3 3"/>
+      <line x1="${pad}" y1="${pad + plotH}" x2="${w - pad}" y2="${pad + plotH}" stroke="rgba(255,255,255,0.15)"/>
+
+      <!-- Labels -->
+      <text x="${pad - 6}" y="${pad + 4}" fill="rgba(255,255,255,0.3)" font-size="10" text-anchor="end" font-family="var(--mono)">100</text>
+      <text x="${pad - 6}" y="${pad + plotH / 2 + 3}" fill="rgba(255,255,255,0.3)" font-size="10" text-anchor="end" font-family="var(--mono)">50</text>
+      <text x="${pad - 6}" y="${pad + plotH + 2}" fill="rgba(255,255,255,0.3)" font-size="10" text-anchor="end" font-family="var(--mono)">0</text>
+
+      <!-- Polyline -->
+      <polyline fill="none" stroke="#EEF1F5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${pointsSvg}"/>
+    </svg>
   `;
 }
 
-async function boot() {
-  const healthEl = document.getElementById("health-status");
-  const traceEl = document.getElementById("trace-status");
-  const totalEl = document.getElementById("metric-runs");
-  const meanEl = document.getElementById("metric-mean");
-  const catalogEl = document.getElementById("metric-catalog");
-  const sparkEl = document.getElementById("spark");
-
-  try {
-    const health = await api("/api/health");
-    healthEl.innerHTML = `<span class="badge badge-success">Backend ${escapeHtml(health.status || "unknown")}</span>`;
-    const tracing = health.tracing || {};
-    traceEl.innerHTML = tracing.available
-      ? `<span class="badge badge-teal">Neatlogs tracing available</span>`
-      : `<span class="badge badge-neutral">Neatlogs tracing unavailable</span>`;
-    document.getElementById("sidebar-health").textContent = tracing.available ? "Tracing on" : "Tracing off";
-  } catch (error) {
-    healthEl.innerHTML = `<span class="badge badge-critical">Health check failed</span>`;
-    traceEl.innerHTML = `<span class="badge badge-neutral">${escapeHtml(error.message)}</span>`;
+function renderLatestRun(run) {
+  const host = document.getElementById("latest-run");
+  if (!run) {
+    host.innerHTML = `
+      <h3>Latest run</h3>
+      <p style="margin:12px 0 0;font-size:14px;color:var(--tx-3)">No test run records available yet.</p>
+    `;
+    return;
   }
 
+  const faults = run.score?.total_faults_applied ?? run.faults?.length ?? 0;
+  const scoreStr = typeof run.score?.overall_resilience_score === "number"
+    ? run.score.overall_resilience_score.toFixed(1)
+    : "Not scored";
+
+  host.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+      <h3 style="margin:0">Latest run</h3>
+      <a class="btn glass" style="min-height:30px;padding:0 12px;font-size:12.5px" href="/runs/${encodeURIComponent(run.run_id)}">Open report</a>
+    </div>
+
+    <div style="font:400 13px var(--mono);color:var(--tx-2);margin-bottom:10px;word-break:break-all">
+      ${escapeHtml(run.run_id)}
+    </div>
+
+    <div style="margin-bottom:12px">
+      ${verdictBadge(run.verdict?.verdict)}
+    </div>
+
+    <div class="summary-list" style="font-size:13px">
+      <div><span>Safety boundary</span>${safetyBadge(run.verdict?.safety_boundary_breached)}</div>
+      <div><span>Resilience index</span><strong class="tabular">${escapeHtml(scoreStr)}</strong></div>
+      <div><span>Faults applied</span><span class="tabular">${faults}</span></div>
+      <div><span>Recorded</span><span>${escapeHtml(formatTime(run.timestamp))}</span></div>
+    </div>
+  `;
+}
+
+function renderCoverage(latestRun, catalog) {
+  const host = document.getElementById("cov-list");
+  if (!host || !catalog) return;
+
+  const appliedIds = new Set((latestRun?.faults || []).map((f) => f.id));
+
+  host.innerHTML = catalog.map((fault) => {
+    const isCovered = appliedIds.has(fault.id);
+    return `
+      <li class="${isCovered ? 'on' : ''}">
+        <span class="s"></span>
+        <div>
+          <b>${escapeHtml(fault.name)}</b>
+          <code>${escapeHtml(fault.id)}</code>
+          <span class="st">${isCovered ? 'Covered' : 'Not in latest run'}</span>
+        </div>
+      </li>
+    `;
+  }).join("");
+}
+
+async function boot() {
+  const runsEl = document.getElementById("metric-runs");
+  const meanEl = document.getElementById("metric-mean");
+  const meanNote = document.getElementById("mean-note");
+  const catalogEl = document.getElementById("metric-catalog");
+
+  // Filter chips click handler
+  document.querySelectorAll(".fchip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".fchip").forEach((b) => b.setAttribute("aria-pressed", "false"));
+      btn.setAttribute("aria-pressed", "true");
+      currentFilter = btn.dataset.filter || "all";
+      renderTable(allRuns);
+    });
+  });
+
+  // Global copy handler
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-copy]");
+    if (btn?.dataset.copy) {
+      copyText(btn.dataset.copy, "Run ID copied");
+    }
+  });
+
   try {
-    const [runs, catalog] = await Promise.all([api("/api/runs"), api("/api/faults")]);
-    totalEl.textContent = String(runs.length);
+    const [runs, catalog] = await Promise.all([
+      api("/api/runs"),
+      api("/api/faults"),
+    ]);
+    allRuns = runs;
+
+    runsEl.textContent = String(runs.length);
     catalogEl.textContent = String(catalog.length);
-    const mean = meanResilience(runs);
-    meanEl.textContent = mean === null ? "Unavailable" : mean.toFixed(1);
-    document.getElementById("mean-note").textContent = mean === null
-      ? "No scored fault runs yet. Clean runs do not contribute a resilience index."
-      : `Average of ${runs.filter((run) => typeof run.score?.overall_resilience_score === "number").length} scored run(s).`;
-    const points = sparkPoints(runs);
-    sparkEl.innerHTML = points
-      ? `<svg viewBox="0 0 220 56" width="100%" height="56" role="img" aria-label="Resilience scores over recorded runs"><polyline fill="none" stroke="#1c4ed8" stroke-width="2" points="${points}" /></svg>`
-      : `<p class="muted">Trend unavailable — need at least two scored fault runs.</p>`;
-    renderRuns(runs);
-    renderLatest(runs[0], catalog);
+
+    const { mean, count } = meanResilience(runs);
+    if (mean !== null) {
+      meanEl.textContent = mean.toFixed(1);
+      meanNote.textContent = `Average of ${count} scored run${count === 1 ? "" : "s"}. Denominator excludes clean runs.`;
+    } else {
+      meanEl.textContent = "Unavailable";
+      meanNote.textContent = "No scored fault runs recorded yet.";
+    }
+
+    renderTable(allRuns);
+    renderLatestRun(allRuns[0]);
+    renderCoverage(allRuns[0], catalog);
+    renderTrend(allRuns);
+    bindSpotlights();
   } catch (error) {
-    document.getElementById("runs-body").innerHTML = `<tr><td colspan="6">Could not load runs: ${escapeHtml(error.message)}</td></tr>`;
+    document.getElementById("runs-body").innerHTML = `
+      <div class="tr" style="grid-template-columns:1fr;padding:20px;color:var(--fault)">
+        Failed to load overview data: ${escapeHtml(error.message)}
+      </div>
+    `;
   }
 }
 
