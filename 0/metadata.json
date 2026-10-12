@@ -1,0 +1,48 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4Q0N5J5R6MD71YJWZAW0CAZ",
+  "session_id": "92055eb0-8ccb-4a49-a2a8-e8f736f0766c",
+  "strategy": "manual-commit",
+  "created_at": "2026-10-12T02:56:48.9526279Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "app/static/js/evidence.js",
+    "app/static/js/hardening.js",
+    "app/static/js/settings.js",
+    "app/templates/evidence.html",
+    "app/templates/hardening.html",
+    "app/templates/not_found.html",
+    "app/templates/settings.html"
+  ],
+  "agent": "Antigravity",
+  "model": "",
+  "turn_id": "515b162e9228",
+  "checkpoint_transcript_start": 47,
+  "transcript_lines_at_start": 47,
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-10-12T02:56:48.9412973Z",
+    "agent_lines": 700,
+    "agent_removed": 178,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 700,
+    "total_lines_changed": 878,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}

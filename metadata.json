@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.11.4",
+  "checkpoint_id": "01M4Q0N5J5R6MD71YJWZAW0CAZ",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "app/static/js/evidence.js",
+    "app/static/js/hardening.js",
+    "app/static/js/settings.js",
+    "app/templates/evidence.html",
+    "app/templates/hardening.html",
+    "app/templates/not_found.html",
+    "app/templates/settings.html"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ]
+}
