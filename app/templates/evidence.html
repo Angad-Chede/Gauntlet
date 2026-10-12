@@ -2,36 +2,132 @@
 {% block title %}Evidence {{ run_id }} — GAUNTLET{% endblock %}
 {% block heading %}Evidence explorer{% endblock %}
 {% block actions %}
-<button class="btn btn-primary" type="button" id="verify-btn">Verify seal</button>
+<button class="btn pearl" type="button" id="verify-btn">
+  <svg class="i" aria-hidden="true"><use href="#i-check"/></svg>
+  <span class="lbl">Verify seal</span>
+</button>
 {% endblock %}
+
 {% block content %}
-<nav class="subnav" aria-label="Run sections">
-  <a href="/runs/{{ run_id }}">Inspector &amp; report</a>
-  <a class="is-active" href="/runs/{{ run_id }}/evidence">Evidence</a>
-  <a href="/runs/{{ run_id }}/hardening">Hardening</a>
-</nav>
-
-<p class="lede">Integrity is proven only after a successful call to the verification API. A green Verified badge will not appear from packet presence alone.</p>
-
-<section class="panel panel-pad">
-  <div class="panel-h">
-    <h2>Verification status</h2>
-    <a class="btn btn-secondary" id="download-json" href="/api/runs/{{ run_id }}/evidence">Inspect packet JSON</a>
+<header class="hd">
+  <p class="kicker">Cryptographic audit packet</p>
+  <div class="idrow">
+    <h1 class="mono" id="evidence-run-id" translate="no">{{ run_id }}</h1>
+    <button class="icon-btn" type="button" id="copy-run-btn" title="Copy run ID" aria-label="Copy run ID">
+      <svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>
+    </button>
   </div>
-  <div id="verify-status"><span class="badge badge-neutral">Not yet verified</span></div>
-  <div id="seals" style="margin-top:12px"></div>
+  <nav class="seg" aria-label="Run sections">
+    <a href="/runs/{{ run_id }}">Inspector &amp; report</a>
+    <a href="/runs/{{ run_id }}/evidence" class="is-active" aria-current="page">Evidence</a>
+    <a href="/runs/{{ run_id }}/hardening" id="tab-hardening">Hardening</a>
+  </nav>
+</header>
+
+<!-- Main frosted glass card: Verification Seal State -->
+<section class="gcard" aria-labelledby="seal-title" data-spot>
+  <div class="ph" style="padding-top:0">
+    <div>
+      <p class="lab">Tamper-evident verification</p>
+      <h2 class="verdict is-neutral" id="seal-title" style="font-size:clamp(26px, 3.2vw, 36px)">
+        <svg class="i" aria-hidden="true"><use href="#i-shield"/></svg>
+        <span>Cryptographic seal verification</span>
+      </h2>
+    </div>
+    <div id="verify-badge">
+      <span class="chip steel"><svg class="i" style="width:14px;height:14px" aria-hidden="true"><use href="#i-target"/></svg>Not yet verified</span>
+    </div>
+  </div>
+
+  <div id="verify-status" aria-live="polite">
+    <p class="why">Integrity is proven only after verifying the SHA-256 seal against the canonical JSON record. A green Verified indicator will not appear from packet presence alone.</p>
+  </div>
+
+  <div id="seals-box" style="margin-top:20px"></div>
 </section>
 
-<section class="panel panel-pad" style="margin-top:16px">
-  <div class="panel-h"><h2>Packet metadata</h2><span class="muted" id="event-count"></span></div>
-  <div id="packet-meta"><div class="skeleton" style="height:72px"></div></div>
-</section>
+<!-- Content reading panel: Canonical Record & Guarantees -->
+<div class="gpanel">
+  <!-- Section 01: Audit Guarantees -->
+  <section class="step" style="padding-top:24px">
+    <div class="step-h">
+      <span class="no">01</span>
+      <h3>Audit seal scope &amp; guarantees</h3>
+    </div>
+    <div class="page-grid grid-2" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;margin-top:14px">
+      <div style="padding:18px;border-radius:var(--radius-sm);background:rgba(9, 13, 21, 0.85);border:1px solid var(--line)">
+        <h4 style="margin:0 0 6px;color:var(--pass);display:flex;align-items:center;gap:6px">
+          <svg class="i" aria-hidden="true"><use href="#i-check"/></svg>
+          What a seal shows
+        </h4>
+        <p style="margin:0;font-size:13.5px;color:var(--tx-2)">
+          Proves <strong>content integrity</strong> and tamper-evidence via deterministic, canonical SHA-256 hashing. Confirms no events or telemetry in the packet were altered after recording.
+        </p>
+      </div>
+      <div style="padding:18px;border-radius:var(--radius-sm);background:rgba(9, 13, 21, 0.85);border:1px solid var(--line)">
+        <h4 style="margin:0 0 6px;color:var(--warn);display:flex;align-items:center;gap:6px">
+          <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+          What a seal does not show
+        </h4>
+        <p style="margin:0;font-size:13.5px;color:var(--tx-2)">
+          Does <strong>not</strong> prove origin authenticity or provide a PKI digital signature. Does not guarantee the underlying subject agent was safe or truthful during execution.
+        </p>
+      </div>
+    </div>
+  </section>
 
-<section class="panel panel-pad" style="margin-top:16px">
-  <div class="panel-h"><h2>Event records</h2></div>
-  <div class="timeline" id="events"></div>
-</section>
+  <!-- Section 02: Packet Metadata -->
+  <section class="step">
+    <div class="step-h">
+      <span class="no">02</span>
+      <h3>Evidence packet metadata</h3>
+    </div>
+    <p class="sub" id="event-count">Loading metadata from stored evidence packet…</p>
+    <div id="packet-meta">
+      <div class="skeleton" style="height:80px"></div>
+    </div>
+  </section>
+
+  <!-- Section 03: Canonical Record JSON -->
+  <section class="step">
+    <div class="step-h">
+      <span class="no">03</span>
+      <h3>Canonical record</h3>
+    </div>
+    <p class="sub">Complete raw JSON payload sealed on disk under <span class="mono">evidence/</span>.</p>
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <a class="btn glass" id="download-json" href="/api/runs/{{ run_id }}/evidence" target="_blank" rel="noopener">
+        <svg class="i" aria-hidden="true"><use href="#i-doc"/></svg>
+        <span>Inspect raw JSON API</span>
+      </a>
+      <button class="btn glass" type="button" id="copy-canonical-btn">
+        <svg class="i" aria-hidden="true"><use href="#i-copy"/></svg>
+        <span>Copy canonical JSON</span>
+      </button>
+    </div>
+    <details style="border-radius:var(--radius-sm);background:rgba(9, 13, 21, 0.95);border:1px solid var(--line);padding:14px">
+      <summary style="cursor:pointer;color:var(--tx-3);font-size:14px;display:flex;align-items:center;gap:6px">
+        <svg class="i" style="width:14px;height:14px" aria-hidden="true"><use href="#i-chev"/></svg>
+        <span>Expand full canonical record payload</span>
+      </summary>
+      <pre id="canonical-json" style="margin-top:14px;font:400 12.5px/1.55 var(--mono);color:var(--tx-2);overflow-x:auto;max-height:480px" translate="no">Loading…</pre>
+    </details>
+  </section>
+
+  <!-- Section 04: Intercept Log Events -->
+  <section class="step">
+    <div class="step-h">
+      <span class="no">04</span>
+      <h3>Recorded event trail</h3>
+    </div>
+    <p class="sub">Structured events captured by the referee proxy.</p>
+    <ol class="tl" id="events">
+      <li class="row ev"><div class="skeleton" style="height:60px;width:100%"></div></li>
+    </ol>
+  </section>
+</div>
 {% endblock %}
+
 {% block scripts %}
 <script type="module" src="/static/js/evidence.js"></script>
 {% endblock %}

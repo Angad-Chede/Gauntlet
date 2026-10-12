@@ -1,10 +1,47 @@
 {% extends "base.html" %}
 {% block title %}Not found — GAUNTLET{% endblock %}
 {% block heading %}Run not found{% endblock %}
+{% block actions %}
+<a class="btn pearl" href="/new">
+  <svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>
+  <span class="lbl">New test run</span>
+</a>
+{% endblock %}
+
 {% block content %}
-<div class="empty panel panel-pad">
-  <h3>No record for this identifier</h3>
-  <p>The run ID was not in memory or on disk. Confirm the identifier, or start a new experiment.</p>
-  <a class="btn btn-primary" href="/new">New test run</a>
-</div>
+<header class="hd">
+  <p class="kicker">404 Error</p>
+  <div class="idrow">
+    <h1 class="ttl">Run not found</h1>
+  </div>
+</header>
+
+<section class="gcard" data-spot style="max-width:720px">
+  <div class="ph" style="padding-top:0">
+    <div>
+      <p class="lab">Missing record</p>
+      <h2 class="verdict is-warn" style="font-size:clamp(24px, 3.2vw, 36px);margin-bottom:8px">
+        <svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>
+        <span>No execution record for this identifier</span>
+      </h2>
+      <p class="why">
+        {% if run_id %}The identifier <code class="mono" style="color:var(--tx)">{{ run_id }}</code> was not found in active memory or persisted storage under <span class="mono">runs/</span>.{% else %}The requested run record could not be located.{% endif %}
+      </p>
+      <p class="why" style="margin-top:8px;color:var(--tx-3)">
+        Verify the identifier in your run URL, or launch a new experiment from the workbench.
+      </p>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
+    <a class="btn pearl" href="/app">
+      <svg class="i" aria-hidden="true"><use href="#i-grid"/></svg>
+      <span>Return to overview</span>
+    </a>
+    <a class="btn glass" href="/new">
+      <svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>
+      <span>Start new test run</span>
+    </a>
+  </div>
+</section>
 {% endblock %}

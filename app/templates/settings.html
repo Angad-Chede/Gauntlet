@@ -1,36 +1,142 @@
 {% extends "base.html" %}
 {% block title %}Integrations — GAUNTLET{% endblock %}
-{% block heading %}Integrations &amp; settings{% endblock %}
-{% block actions %}{% endblock %}
-{% block content %}
-<p class="lede">Only capabilities the running process actually exposes. Secrets, environment files, and API keys are not shown.</p>
+{% block heading %}Integrations{% endblock %}
+{% block actions %}
+<a class="btn pearl" href="/new">
+  <svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>
+  <span class="lbl">New test run</span>
+</a>
+{% endblock %}
 
-<div class="page-grid grid-2">
-  <section class="panel panel-pad">
-    <div class="panel-h"><h2>Runtime health</h2></div>
-    <div id="settings-status"><div class="skeleton" style="height:80px"></div></div>
-  </section>
-  <section class="panel panel-pad">
-    <div class="panel-h"><h2>Evidence verification</h2></div>
-    <p>Each completed run writes a canonical JSON packet under <span class="mono">evidence/</span> with a SHA-256 seal. Open a run, then use <strong>Verify seal</strong> to compare stored and recomputed digests.</p>
-    <p class="help">The seal proves content integrity, not origin authenticity or a PKI signature.</p>
-  </section>
-  <section class="panel panel-pad">
-    <div class="panel-h"><h2>Neatlogs tracing</h2></div>
-    <p>When a server-side API key is present, runs emit workflow spans. Trace IDs appear on evidence packets only if the SDK returned a span context.</p>
-    <p class="help">Status: available or unavailable from <span class="mono">/api/health</span>. Linked dashboards outside this process are not claimed here.</p>
-  </section>
-  <section class="panel panel-pad">
-    <div class="panel-h"><h2>Not implemented in this build</h2></div>
-    <ul class="muted">
-      <li>SSO / authentication</li>
-      <li>Remote agent registration</li>
-      <li>Automatic patch application</li>
-      <li>WebSocket live telemetry</li>
-    </ul>
-  </section>
+{% block content %}
+<header class="hd">
+  <h1 class="ttl">Integrations</h1>
+  <p class="lead">
+    Configured runtime subsystems and diagnostic capabilities exposed by this GAUNTLET deployment. API secrets, private keys, and environment tokens are masked and never rendered.
+  </p>
+</header>
+
+<div class="cols ov">
+  <div>
+    <!-- Main Frosted Glass Card: Integrations List in hairline-separated rows -->
+    <section class="gcard" aria-labelledby="integ-title" data-spot>
+      <div class="ph" style="padding-top:0">
+        <div>
+          <p class="lab">Subsystems</p>
+          <h2 class="verdict is-neutral" id="integ-title" style="font-size:clamp(24px, 3.2vw, 36px);margin-bottom:6px">
+            <svg class="i" aria-hidden="true"><use href="#i-gear"/></svg>
+            <span>Connected services &amp; integrations</span>
+          </h2>
+          <p class="why">Hairline-separated runtime connections verified from real backend health.</p>
+        </div>
+      </div>
+
+      <div class="integ-list" id="integrations-list">
+        <!-- Item 1: Gauntlet Core -->
+        <div class="integ-row">
+          <div class="integ-name">
+            <b>GAUNTLET Core</b>
+            <span class="mono">orchestrator-ready</span>
+          </div>
+          <div class="integ-desc">
+            <p>Primary adversarial chaos orchestrator, fault proxy, and referee evaluation harness.</p>
+            <div class="meta-line">Source: local FastAPI runtime · Service: <code class="mono">gauntlet-core</code></div>
+          </div>
+          <div id="status-core">
+            <span class="chip pass"><span class="dot"></span>Connected</span>
+          </div>
+        </div>
+
+        <!-- Item 2: Neatlogs Tracing -->
+        <div class="integ-row">
+          <div class="integ-name">
+            <b>Neatlogs Tracing</b>
+            <span class="mono">workflow-telemetry</span>
+          </div>
+          <div class="integ-desc">
+            <p>Exportable span telemetry and execution traces for distributed resilience observation.</p>
+            <div class="meta-line" id="meta-neatlogs">Source: <code class="mono">NEATLOGS_API_KEY</code> environment · SDK status checking…</div>
+          </div>
+          <div id="status-neatlogs">
+            <span class="chip steel"><span class="dot warn"></span>Checking…</span>
+          </div>
+        </div>
+
+        <!-- Item 3: Cryptographic Audit Seal Engine -->
+        <div class="integ-row">
+          <div class="integ-name">
+            <b>Audit Seal Engine</b>
+            <span class="mono">sha256-canonical</span>
+          </div>
+          <div class="integ-desc">
+            <p>Deterministic JSON canonicalization and SHA-256 evidence integrity hashing engine.</p>
+            <div class="meta-line">Source: built-in audit engine · Local storage: <code class="mono">evidence/</code></div>
+          </div>
+          <div id="status-seal">
+            <span class="chip pass"><span class="dot"></span>Connected</span>
+          </div>
+        </div>
+
+        <!-- Item 4: Subject Agent Sandbox -->
+        <div class="integ-row">
+          <div class="integ-name">
+            <b>Subject Sandbox</b>
+            <span class="mono">autonomous-harness</span>
+          </div>
+          <div class="integ-desc">
+            <p>Isolated execution environment for target agent resilience testing and fault injection.</p>
+            <div class="meta-line">Target: Autonomous Assistant v1 · Mode: local proxy intercept</div>
+          </div>
+          <div id="status-subject">
+            <span class="chip pass"><span class="dot"></span>Connected</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Reading Panel: System Health Diagnostics & Unimplemented Features -->
+    <div class="gpanel">
+      <section class="step" style="padding-top:20px">
+        <div class="step-h">
+          <span class="no">01</span>
+          <h3>Runtime health telemetry</h3>
+        </div>
+        <p class="sub">Structured diagnostics returned from <span class="mono">/api/health</span>.</p>
+        <div id="settings-status">
+          <div class="skeleton" style="height:100px"></div>
+        </div>
+      </section>
+
+      <section class="step">
+        <div class="step-h">
+          <span class="no">02</span>
+          <h3>Explicit deployment scope</h3>
+        </div>
+        <p class="sub">To maintain architectural honesty, capabilities not supported by this deployment are listed below:</p>
+        <div class="summary-list" style="margin-top:12px">
+          <div><span>Remote SSO / OAuth2 Provider</span><span class="chip steel">Not configured</span></div>
+          <div><span>External Agent Webhook Registry</span><span class="chip steel">Not configured</span></div>
+          <div><span>Automatic Patch Disk Committer</span><span class="chip steel">Advisory only</span></div>
+          <div><span>Live WebSocket Telemetry Bus</span><span class="chip steel">Not implemented</span></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <aside class="side-sec">
+    <div class="gpanel" style="margin-top:0;padding:22px 22px 18px">
+      <h3>Security &amp; credentials</h3>
+      <p style="margin:10px 0 0;font-size:13.5px;color:var(--tx-2);line-height:1.55">
+        GAUNTLET enforces zero secret reflection. Environment credentials, private tokens, and API keys are never returned by API endpoints or rendered in dashboard markup.
+      </p>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--tx-3)">
+        Audit seal verification uses deterministic content hashing and does not require private key storage.
+      </div>
+    </div>
+  </aside>
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script type="module" src="/static/js/settings.js"></script>
 {% endblock %}
